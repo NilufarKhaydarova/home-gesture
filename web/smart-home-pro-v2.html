@@ -1,0 +1,1130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartHome Pro</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #0d1117;
+            --bg-secondary: #161b22;
+            --bg-tertiary: #21262d;
+            --bg-card: rgba(22, 27, 34, 0.8);
+            --border-color: rgba(48, 54, 63, 0.5);
+            --text-primary: #e6edf3;
+            --text-secondary: #8b949e;
+            --text-muted: rgba(139, 148, 158, 0.5);
+            --accent-primary: #58a6ff;
+            --accent-secondary: #8b5cf6;
+            --success: #3fb950;
+            --warning: #f0883e;
+            --danger: #f85149;
+        }
+
+        body {
+            font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .app {
+            max-width: 1800px;
+            margin: 0 auto;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 24px 32px;
+            background: var(--bg-card);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            margin-bottom: 24px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .logo-icon {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            box-shadow: 0 4px 20px rgba(88, 166, 255, 0.3);
+        }
+
+        .logo h1 {
+            font-size: 28px;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .status-bar {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+        }
+
+        .status-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: var(--bg-tertiary);
+            border-radius: 20px;
+            border: 1px solid var(--border-color);
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--danger);
+        }
+
+        .status-dot.active {
+            background: var(--success);
+            box-shadow: 0 0 8px var(--success);
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+
+        .card {
+            background: var(--bg-card);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 24px;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .card-title {
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .camera-wrapper {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 16/9;
+            background: #000;
+            border-radius: 16px;
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+        }
+
+        #video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        #canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        .camera-placeholder {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, rgba(88, 166, 255, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
+        }
+
+        .camera-icon {
+            width: 64px;
+            height: 64px;
+            background: rgba(88, 166, 255, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            margin-bottom: 16px;
+        }
+
+        .gesture-display {
+            background: var(--bg-tertiary);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            margin-top: 20px;
+            border: 1px solid var(--border-color);
+        }
+
+        .gesture-icon {
+            font-size: 48px;
+            margin-bottom: 8px;
+        }
+
+        .gesture-name {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .controls {
+            display: flex;
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 14px 24px;
+            border: none;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(88, 166, 255, 0.4);
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+
+        .voice-btn {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+        }
+
+        .voice-btn:hover {
+            background: var(--bg-secondary);
+        }
+
+        .voice-btn.listening {
+            background: var(--success);
+            border-color: var(--success);
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        /* Floor Plan */
+        .floor-plan {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 4/3;
+            background: var(--bg-tertiary);
+            border-radius: 16px;
+            padding: 40px;
+            border: 1px solid var(--border-color);
+        }
+
+        .floor-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            grid-template-rows: repeat(2, 1fr);
+            gap: 2px;
+            height: 100%;
+            background: var(--border-color);
+        }
+
+        .room {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 20px;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .room:hover {
+            background: var(--bg-tertiary);
+        }
+
+        .room.active {
+            box-shadow: 0 0 30px rgba(88, 166, 255, 0.3);
+        }
+
+        .room-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .room-icon {
+            font-size: 32px;
+        }
+
+        .room-name {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .room-devices {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .device-indicator {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            font-size: 13px;
+            border: 1px solid var(--border-color);
+        }
+
+        .device-indicator.on {
+            background: rgba(63, 185, 80, 0.2);
+            border-color: rgba(63, 185, 80, 0.5);
+        }
+
+        .device-icon {
+            font-size: 16px;
+        }
+
+        /* Voice Commands Panel */
+        .voice-commands {
+            margin-top: 24px;
+        }
+
+        .voice-commands h3 {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 16px;
+        }
+
+        .voice-examples {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .voice-example {
+            padding: 10px 16px;
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            font-size: 13px;
+            color: var(--text-secondary);
+            border: 1px solid var(--border-color);
+        }
+
+        .voice-example kbd {
+            color: var(--accent-primary);
+            font-weight: 600;
+        }
+
+        /* Activity Log */
+        .activity-log {
+            max-height: 250px;
+            overflow-y: auto;
+        }
+
+        .log-entry {
+            padding: 14px 16px;
+            background: var(--bg-tertiary);
+            border-radius: 12px;
+            margin-bottom: 8px;
+            border-left: 3px solid var(--accent-primary);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .log-time {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .log-message {
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .log-icon {
+            font-size: 20px;
+        }
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-secondary);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--bg-card);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--text-muted);
+        }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <header>
+            <div class="logo">
+                <div class="logo-icon">🏠</div>
+                <h1>SmartHome Pro</h1>
+            </div>
+            <div class="status-bar">
+                <div class="status-badge">
+                    <div class="status-dot" id="cameraDot"></div>
+                    <span id="cameraStatus">Camera Off</span>
+                </div>
+                <div class="status-badge">
+                    <div class="status-dot" id="voiceDot"></div>
+                    <span id="voiceStatus">Voice Off</span>
+                </div>
+            </div>
+        </header>
+
+        <div class="main-grid">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">📷 Camera & Control</div>
+                </div>
+
+                <div class="camera-wrapper">
+                    <div class="camera-placeholder" id="placeholder">
+                        <div class="camera-icon">📹</div>
+                        <p style="color: var(--text-secondary); font-size: 14px;">Click Start to begin</p>
+                    </div>
+                    <video id="video" autoplay playsinline style="display:none;"></video>
+                    <canvas id="canvas"></canvas>
+                </div>
+
+                <div class="gesture-display">
+                    <div class="gesture-icon" id="gestureIcon">👋</div>
+                    <div class="gesture-name" id="gestureName">Waiting for gesture...</div>
+                </div>
+
+                <div class="controls">
+                    <button class="btn btn-primary" id="startBtn" onclick="startCamera()">Start Camera</button>
+                    <button class="btn btn-danger" id="stopBtn" onclick="stopCamera()" style="display:none;">Stop Camera</button>
+                    <button class="btn voice-btn" id="voiceBtn" onclick="toggleVoice()">🎤 Enable Voice</button>
+                </div>
+
+                <div class="voice-commands">
+                    <h3>Voice Commands</h3>
+                    <div class="voice-examples">
+                        <div class="voice-example"><kbd>"turn on kitchen light"</kbd></div>
+                        <div class="voice-example"><kbd>"turn off living room"</kbd></div>
+                        <div class="voice-example"><kbd>"open curtains"</kbd></div>
+                        <div class="voice-example"><kbd>"close bedroom ac"</kbd></div>
+                        <div class="voice-example"><kbd>"turn on all lights"</kbd></div>
+                        <div class="voice-example"><kbd>"turn off everything"</kbd></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">📍 House Floor Plan</div>
+                </div>
+
+                <div class="floor-plan">
+                    <div class="floor-grid" id="floorGrid"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card activity-log">
+            <div class="card-header">
+                <div class="card-title">📋 Activity Log</div>
+            </div>
+            <div class="activity-log" id="logList">
+                <div class="log-entry">
+                    <div class="log-message">👋 Welcome to SmartHome Pro!</div>
+                    <div class="log-icon">🏠</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // State
+        let video, canvas, ctx;
+        let isCameraRunning = false;
+        let isVoiceEnabled = false;
+        let currentRoomIndex = 0;
+        let lastGestureTime = 0;
+        let gestureSequence = [];
+        let recognition;
+
+        // House data
+        const houseData = {
+            rooms: [
+                {
+                    name: 'Living Room',
+                    icon: '🛋️',
+                    color: '#667eea',
+                    devices: [
+                        { id: 'light', name: 'Main Light', icon: '💡', state: false },
+                        { id: 'tv', name: 'Smart TV', icon: '📺', state: false },
+                        { id: 'curtain', name: 'Curtains', icon: '🪟', state: 'closed' }
+                    ]
+                },
+                {
+                    name: 'Kitchen',
+                    icon: '🍳',
+                    color: '#f59e0b',
+                    devices: [
+                        { id: 'light', name: 'Ceiling Light', icon: '💡', state: false },
+                        { id: 'fan', name: 'Exhaust Fan', icon: '🌀', state: false }
+                    ]
+                },
+                {
+                    name: 'Bedroom',
+                    icon: '🛏️',
+                    color: '#ec4899',
+                    devices: [
+                        { id: 'light', name: 'Bedroom Light', icon: '💡', state: false },
+                        { id: 'ac', name: 'Air Conditioner', icon: '❄️', state: false },
+                        { id: 'curtain', name: 'Curtains', icon: '🪟', state: 'closed' }
+                    ]
+                },
+                {
+                    name: 'Bathroom',
+                    icon: '🚿',
+                    color: '#06b6d4',
+                    devices: [
+                        { id: 'light', name: 'Bathroom Light', icon: '💡', state: false },
+                        { id: 'fan', name: 'Ventilation', icon: '🌀', state: false }
+                    ]
+                }
+            ]
+        };
+
+        // Initialize
+        function init() {
+            video = document.getElementById('video');
+            canvas = document.getElementById('canvas');
+            ctx = canvas.getContext('2d');
+            renderFloorPlan();
+        }
+
+        // Render floor plan
+        function renderFloorPlan() {
+            const grid = document.getElementById('floorGrid');
+            grid.innerHTML = '';
+
+            houseData.rooms.forEach((room, index) => {
+                const roomEl = document.createElement('div');
+                roomEl.className = `room ${index === currentRoomIndex ? 'active' : ''}`;
+                roomEl.onclick = () => selectRoom(index);
+
+                let devicesHtml = '';
+                room.devices.forEach(device => {
+                    const isOn = device.type === 'curtain' ? device.state === 'open' : device.state;
+                    devicesHtml += `
+                        <div class="device-indicator ${isOn ? 'on' : ''}">
+                            <span class="device-icon">${device.icon}</span>
+                            <span>${device.name}</span>
+                        </div>
+                    `;
+                });
+
+                roomEl.innerHTML = `
+                    <div class="room-header">
+                        <span class="room-icon">${room.icon}</span>
+                        <span class="room-name">${room.name}</span>
+                    </div>
+                    <div class="room-devices">${devicesHtml}</div>
+                `;
+
+                grid.appendChild(roomEl);
+            });
+        }
+
+        function selectRoom(index) {
+            currentRoomIndex = index;
+            renderFloorPlan();
+            addLog(`Selected ${houseData.rooms[index].name}`, '📍');
+        }
+
+        // Camera functions
+        async function startCamera() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: 'user', width: 1280, height: 720 }
+                });
+
+                video.srcObject = stream;
+                await video.play();
+
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+
+                document.getElementById('placeholder').style.display = 'none';
+                video.style.display = 'block';
+
+                document.getElementById('startBtn').style.display = 'none';
+                document.getElementById('stopBtn').style.display = 'block';
+
+                document.getElementById('cameraDot').classList.add('active');
+                document.getElementById('cameraStatus').textContent = 'Camera On';
+
+                isCameraRunning = true;
+                addLog('Camera started', '📷');
+
+                loadMediaPipe();
+
+            } catch (error) {
+                alert('Camera access denied: ' + error.message);
+                addLog('Error: ' + error.message, '❌');
+            }
+        }
+
+        function stopCamera() {
+            isCameraRunning = false;
+
+            if (video.srcObject) {
+                const tracks = video.srcObject.getTracks();
+                tracks.forEach(track => track.stop());
+                video.srcObject = null;
+            }
+
+            document.getElementById('placeholder').style.display = 'flex';
+            video.style.display = 'none';
+
+            document.getElementById('startBtn').style.display = 'block';
+            document.getElementById('stopBtn').style.display = 'none';
+
+            document.getElementById('cameraDot').classList.remove('active');
+            document.getElementById('cameraStatus').textContent = 'Camera Off';
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            addLog('Camera stopped', '📷');
+        }
+
+        // MediaPipe
+        function loadMediaPipe() {
+            const script = document.createElement('script');
+            script.src = 'https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js';
+            script.onload = () => {
+                const Hands = window.Hands;
+                const hands = new Hands({locateFile: (file) => {
+                    return `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`;
+                }});
+
+                hands.setOptions({
+                    maxNumHands: 1,
+                    modelComplexity: 1,
+                    minDetectionConfidence: 0.5,
+                    minTrackingConfidence: 0.5
+                });
+
+                hands.onResults(onResults);
+
+                async function sendFrames() {
+                    if (!isCameraRunning) return;
+                    await hands.send({image: video});
+                    requestAnimationFrame(sendFrames);
+                }
+                sendFrames();
+            };
+            document.head.appendChild(script);
+        }
+
+        function onResults(results) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
+                const landmarks = results.multiHandLandmarks[0];
+
+                // Draw hand
+                ctx.fillStyle = '#10b981';
+                for (let i = 0; i < landmarks.length; i++) {
+                    ctx.beginPath();
+                    ctx.arc(landmarks[i].x * canvas.width, landmarks[i].y * canvas.height, 6, 0, 2 * Math.PI);
+                    ctx.fill();
+                }
+
+                ctx.strokeStyle = '#58a6ff';
+                ctx.lineWidth = 3;
+
+                const connections = [
+                    [0,1],[1,2],[2,3],[3,4],[0,5],[5,6],[6,7],[7,8],
+                    [5,9],[9,10],[10,11],[11,12],[9,13],[13,14],[14,15],[15,16],
+                    [13,17],[17,18],[18,19],[19,20],[0,17]
+                ];
+
+                for (const [start, end] of connections) {
+                    ctx.beginPath();
+                    ctx.moveTo(landmarks[start].x * canvas.width, landmarks[start].y * canvas.height);
+                    ctx.lineTo(landmarks[end].x * canvas.width, landmarks[end].y * canvas.height);
+                    ctx.stroke();
+                }
+
+                // Detect gesture
+                const gesture = detectGesture(results.multiHandLandmarks);
+                if (gesture) {
+                    executeGesture(gesture);
+                }
+            }
+        }
+
+        // Gesture detection
+        function detectGesture(landmarks) {
+            const now = Date.now();
+            if (now - lastGestureTime < 1500) return null;
+
+            const hand = landmarks[0];
+            const thumbTip = hand[4];
+            const indexTip = hand[8];
+            const middleTip = hand[12];
+            const ringTip = hand[16];
+            const pinkyTip = hand[20];
+            const wrist = hand[0];
+
+            const indexBase = hand[5];
+            const middleBase = hand[9];
+            const ringBase = hand[13];
+            const pinkyBase = hand[17];
+
+            const indexExtended = indexTip.y < indexBase.y;
+            const middleExtended = middleTip.y < middleBase.y;
+            const ringExtended = ringTip.y < ringBase.y;
+            const pinkyExtended = pinkyTip.y < pinkyBase.y;
+            const thumbUp = thumbTip.y < hand[2].y;
+
+            const extendedCount = [indexExtended, middleExtended, ringExtended, pinkyExtended].filter(Boolean).length;
+
+            // Check gestures
+            if (extendedCount === 0 && !thumbUp) return 'fist';
+            if (extendedCount === 4 && thumbUp) return 'openHand';
+            if (extendedCount === 1 && indexExtended) return 'pointing';
+            if (thumbUp && !indexExtended && !middleExtended && !ringExtended && !pinkyExtended) return 'thumbsUp';
+            if (!thumbUp && !indexExtended && !middleExtended && !ringExtended && !pinkyExtended) return 'thumbsDown';
+
+            // Wave detection - track wrist movement
+            if (extendedCount >= 3) {
+                gestureSequence.push({ x: wrist.x, time: now });
+                if (gestureSequence.length > 5) {
+                    gestureSequence.shift();
+                    const recent = gestureSequence.slice(-5);
+                    const directions = [];
+                    for (let i = 1; i < recent.length; i++) {
+                        const diff = recent[i].x - recent[i-1].x;
+                        directions.push(diff > 0.01 ? 'right' : diff < -0.01 ? 'left' : 'still');
+                    }
+                    if (directions.includes('right') && directions.includes('left')) {
+                        gestureSequence = [];
+                        return 'wave';
+                    }
+                }
+            }
+
+            return null;
+        }
+
+        // Execute gesture
+        function executeGesture(gesture) {
+            lastGestureTime = Date.now();
+
+            const gestures = {
+                wave: { icon: '👋', name: 'Wave' },
+                pointing: { icon: '☝️', name: 'Pointing' },
+                thumbsUp: { icon: '👍', name: 'Thumbs Up' },
+                thumbsDown: { icon: '👎', name: 'Thumbs Down' },
+                fist: { icon: '✊', name: 'Fist' },
+                openHand: { icon: '✋', name: 'Open Hand' }
+            };
+
+            const g = gestures[gesture];
+            document.getElementById('gestureIcon').textContent = g.icon;
+            document.getElementById('gestureName').textContent = g.name;
+
+            switch(gesture) {
+                case 'wave':
+                    houseData.rooms[0].devices[0].state = !houseData.rooms[0].devices[0].state;
+                    addLog(`Wave - Living room light: ${houseData.rooms[0].devices[0].state ? 'ON' : 'OFF'}`, '👋');
+                    break;
+
+                case 'pointing':
+                    currentRoomIndex = (currentRoomIndex + 1) % houseData.rooms.length;
+                    addLog(`Pointing - Selected ${houseData.rooms[currentRoomIndex].name}`, '☝️');
+                    break;
+
+                case 'thumbsUp':
+                    for (const room of houseData.rooms) {
+                        for (const d of room.devices) {
+                            if (d.id === 'curtain') d.state = 'open';
+                        }
+                    }
+                    addLog('Thumbs Up - All curtains opened', '👍');
+                    break;
+
+                case 'thumbsDown':
+                    for (const room of houseData.rooms) {
+                        for (const d of room.devices) {
+                            if (d.id === 'curtain') d.state = 'closed';
+                        }
+                    }
+                    addLog('Thumbs Down - All curtains closed', '👎');
+                    break;
+
+                case 'fist':
+                    for (const room of houseData.rooms) {
+                        for (const d of room.devices) {
+                            if (d.id === 'light') d.state = false;
+                            if (d.id === 'ac' || d.id === 'tv' || d.id === 'fan') d.state = false;
+                        }
+                    }
+                    addLog('Fist - All devices OFF', '✊');
+                    break;
+
+                case 'openHand':
+                    for (const room of houseData.rooms) {
+                        for (const d of room.devices) {
+                            if (d.id === 'light') d.state = true;
+                        }
+                    }
+                    addLog('Open Hand - All lights ON', '✋');
+                    break;
+            }
+
+            renderFloorPlan();
+        }
+
+        // Voice recognition
+        function toggleVoice() {
+            if (isVoiceEnabled) {
+                stopVoice();
+            } else {
+                startVoice();
+            }
+        }
+
+        async function startVoice() {
+            if (!('webkitSpeechRecognition' in window) {
+                alert('Voice recognition not supported in this browser');
+                return;
+            }
+
+            recognition = new webkitSpeechRecognition();
+            recognition.continuous = true;
+            recognition.interimResults = false;
+            recognition.lang = 'en-US';
+
+            recognition.onresult = (event) => {
+                const transcript = event.results[event.results.length - 1][0].transcript.toLowerCase();
+                addLog(`Voice: "${transcript}"`, '🎤');
+                processVoiceCommand(transcript);
+            };
+
+            recognition.onerror = (event) => {
+                console.error('Speech recognition error:', event.error);
+            };
+
+            recognition.onend = () => {
+                if (isVoiceEnabled) {
+                    recognition.start();
+                }
+            };
+
+            try {
+                recognition.start();
+                isVoiceEnabled = true;
+                document.getElementById('voiceBtn').classList.add('listening');
+                document.getElementById('voiceDot').classList.add('active');
+                document.getElementById('voiceStatus').textContent = 'Listening...';
+                addLog('Voice recognition started', '🎤');
+            } catch (error) {
+                alert('Failed to start voice recognition: ' + error.message);
+                addLog('Error: ' + error.message, '❌');
+            }
+        }
+
+        function stopVoice() {
+            if (recognition) {
+                recognition.stop();
+            }
+            isVoiceEnabled = false;
+            document.getElementById('voiceBtn').classList.remove('listening');
+            document.getElementById('voiceDot').classList.remove('active');
+            document.getElementById('voiceStatus').textContent = 'Voice Off';
+            addLog('Voice recognition stopped', '🎤');
+        }
+
+        function processVoiceCommand(command) {
+            // Remove periods and trim
+            command = command.replace(/\./g, '').trim();
+
+            // Pattern matching for voice commands
+            const patterns = [
+                {
+                    regex: /turn on.*kitchen.*light/,
+                    action: () => setDevice('kitchen', 'light', true),
+                    desc: 'Kitchen light ON'
+                },
+                {
+                    regex: /turn off.*kitchen.*light/,
+                    action: () => setDevice('kitchen', 'light', false),
+                    desc: 'Kitchen light OFF'
+                },
+                {
+                    regex: /turn on.*living room.*light/,
+                    action: () => setDevice('living_room', 'light', true),
+                    desc: 'Living room light ON'
+                },
+                {
+                    regex: /turn off.*living room.*light/,
+                    action: () => setDevice('living_room', 'light', false),
+                    desc: 'Living room light OFF'
+                },
+                {
+                    regex: /turn on.*bedroom.*light/,
+                    action: () => setDevice('bedroom', 'light', true),
+                    desc: 'Bedroom light ON'
+                },
+                {
+                    regex: /turn off.*bedroom.*light/,
+                    action: () => setDevice('bedroom', 'light', false),
+                    desc: 'Bedroom light OFF'
+                },
+                {
+                    regex: /turn on.*bathroom.*light/,
+                    action: () => setDevice('bathroom', 'light', true),
+                    desc: 'Bathroom light ON'
+                },
+                {
+                    regex: /turn off.*bathroom.*light/,
+                    action: () => setDevice('bathroom', 'light', false),
+                    desc: 'Bathroom light OFF'
+                },
+                {
+                    regex: /open.*curtain/i,
+                    action: () => setAllCurtains(true),
+                    desc: 'All curtains opened'
+                },
+                {
+                    regex: /close.*curtain/i,
+                    action: () => setAllCurtains(false),
+                    desc: 'All curtains closed'
+                },
+                {
+                    regex: /turn on.*all.*light/i,
+                    action: () => setAllLights(true),
+                    desc: 'All lights ON'
+                },
+                {
+                    regex: /turn off.*all.*light/i,
+                    action: () => setAllLights(false),
+                    desc: 'All lights OFF'
+                },
+                {
+                    regex: /turn on.*everything/i,
+                    action: () => turnOnEverything(),
+                    desc: 'Everything ON'
+                },
+                {
+                    regex: /turn off.*everything/i,
+                    action: () => turnOffEverything(),
+                    desc: 'Everything OFF'
+                },
+                {
+                    regex: /select.*kitchen/i,
+                    action: () => selectRoom(1),
+                    desc: 'Selected Kitchen'
+                },
+                {
+                    regex: /select.*bedroom/i,
+                    action: () => selectRoom(2),
+                    desc: 'Selected Bedroom'
+                },
+                {
+                    regex: /select.*bathroom/i,
+                    action: () => selectRoom(3),
+                    desc: 'Selected Bathroom'
+                },
+                {
+                    regex: /select.*living.*room/i,
+                    action: () => selectRoom(0),
+                    desc: 'Selected Living Room'
+                }
+            ];
+
+            for (const pattern of patterns) {
+                if (pattern.regex.test(command)) {
+                    pattern.action();
+                    break;
+                }
+            }
+        }
+
+        function setDevice(roomId, deviceId, state) {
+            const room = houseData.rooms.find(r => r.id === roomId);
+            if (!room) return;
+
+            const device = room.devices.find(d => d.id === deviceId);
+            if (!device) return;
+
+            device.state = state;
+            renderFloorPlan();
+            addLog(`Voice: ${room.name} ${device.name} ${state ? 'ON' : 'OFF'}`, '🎤');
+        }
+
+        function setAllCurtains(state) {
+            for (const room of houseData.rooms) {
+                for (const device of room.devices) {
+                    if (device.id === 'curtain') {
+                        device.state = state ? 'open' : 'closed';
+                    }
+                }
+            }
+            renderFloorPlan();
+            addLog(`Voice: All curtains ${state ? 'opened' : 'closed'}`, '🎤');
+        }
+
+        function setAllLights(state) {
+            for (const room of houseData.rooms) {
+                for (const device of room.devices) {
+                    if (device.id === 'light') {
+                        device.state = state;
+                    }
+                }
+            }
+            renderFloorPlan();
+            addLog(`Voice: All lights ${state ? 'ON' : 'OFF'}`, '🎤');
+        }
+
+        function turnOnEverything() {
+            for (const room of houseData.rooms) {
+                for (const device of room.devices) {
+                    device.state = true;
+                    if (device.id === 'curtain') device.state = 'open';
+                }
+            }
+            renderFloorPlan();
+            addLog('Voice: Everything turned ON', '🎤');
+        }
+
+        function turnOffEverything() {
+            for (const room of houseData.rooms) {
+                for (const device of room.devices) {
+                    device.state = false;
+                    if (device.id === 'curtain') device.state = 'closed';
+                }
+            }
+            renderFloorPlan();
+            addLog('Voice: Everything turned OFF', '🎤');
+        }
+
+        // Logging
+        function addLog(message, icon = '') {
+            const now = new Date();
+            const time = now.toLocaleTimeString();
+
+            const logEntry = document.createElement('div');
+            logEntry.className = 'log-entry';
+            logEntry.innerHTML = `
+                <div class="log-time">${time}</div>
+                <div class="log-message">${message}</div>
+                <div class="log-icon">${icon}</div>
+            `;
+
+            const logList = document.getElementById('logList');
+            logList.insertBefore(logEntry, logList.firstChild);
+
+            while (logList.children.length > 15) {
+                logList.removeChild(logList.lastChild);
+            }
+        }
+
+        // Make functions global
+        window.startCamera = startCamera;
+        window.stopCamera = stopCamera;
+        window.toggleVoice = toggleVoice;
+
+        // Initialize
+        window.onload = init;
+    </script>
+</body>
+</html>

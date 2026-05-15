@@ -1,0 +1,1795 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Home AI</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 50%, #16213e 100%);
+            min-height: 100vh;
+            color: white;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            padding: 40px 0;
+        }
+
+        h1 {
+            font-size: 42px;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: rgba(255,255,255,0.7);
+            font-size: 18px;
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .camera-card {
+            background: rgba(30, 30, 50, 0.8);
+            border-radius: 20px;
+            padding: 20px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .camera-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .camera-header h2 {
+            font-size: 20px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-danger {
+            background: #ef4444;
+            color: white;
+        }
+
+        .video-container {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 16/9;
+            background: #000;
+            border-radius: 15px;
+            overflow: hidden;
+        }
+
+        #video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        #canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        .placeholder {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.2) 0%, rgba(118, 75, 162, 0.2) 100%);
+        }
+
+        .placeholder-icon {
+            font-size: 64px;
+            margin-bottom: 16px;
+        }
+
+        .gesture-display {
+            background: rgba(102, 126, 234, 0.15);
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            margin-top: 20px;
+            position: relative;
+        }
+
+        .pipeline-status {
+            margin-top: 10px;
+            font-size: 12px;
+            color: rgba(255,255,255,0.78);
+            letter-spacing: 0.2px;
+        }
+
+        .gesture-icon {
+            font-size: 64px;
+            margin-bottom: 10px;
+        }
+
+        /* hold-to-trigger ring */
+        .hold-ring-wrap {
+            display: inline-block;
+            position: relative;
+            width: 90px;
+            height: 90px;
+            margin-bottom: 6px;
+        }
+
+        .hold-ring-wrap .gesture-icon {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 44px;
+            margin: 0;
+        }
+
+        .hold-ring-svg {
+            width: 90px;
+            height: 90px;
+            transform: rotate(-90deg);
+        }
+
+        .hold-ring-bg {
+            fill: none;
+            stroke: rgba(255,255,255,0.1);
+            stroke-width: 5;
+        }
+
+        .hold-ring-arc {
+            fill: none;
+            stroke: #667eea;
+            stroke-width: 5;
+            stroke-linecap: round;
+            stroke-dasharray: 251;
+            stroke-dashoffset: 251;
+            transition: stroke-dashoffset 0.1s linear, stroke 0.3s;
+        }
+
+        .hold-ring-arc.eyes {
+            stroke: #f59e0b;
+        }
+
+        /* eye-closed status badge */
+        .eye-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 8px;
+            padding: 5px 12px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 600;
+            background: rgba(245,158,11,0.15);
+            border: 1px solid rgba(245,158,11,0.3);
+            color: #fcd34d;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .eye-status.visible { opacity: 1; }
+
+        .house-card {
+            background: rgba(30, 30, 50, 0.8);
+            border-radius: 20px;
+            padding: 20px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .house-card h2 {
+            font-size: 20px;
+            margin-bottom: 8px;
+        }
+
+        .house-subtitle {
+            font-size: 13px;
+            color: rgba(255,255,255,0.65);
+            margin-bottom: 18px;
+        }
+
+        .house-status-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+
+        .status-pill {
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 10px;
+        }
+
+        .status-label {
+            font-size: 11px;
+            color: rgba(255,255,255,0.65);
+            margin-bottom: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .status-value {
+            font-size: 16px;
+            font-weight: 700;
+        }
+
+        .floor-layout {
+            display: grid;
+            grid-template-columns: 1.2fr 0.9fr;
+            gap: 14px;
+        }
+
+        .floor-map {
+            position: relative;
+            background: linear-gradient(145deg, rgba(14, 21, 44, 0.85), rgba(10, 15, 34, 0.9));
+            border-radius: 16px;
+            border: 1px solid rgba(255,255,255,0.08);
+            min-height: 450px;
+            padding: 12px;
+            overflow: hidden;
+        }
+
+        .map-topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .floor-tabs {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .floor-tab {
+            border: 1px solid rgba(255,255,255,0.2);
+            background: rgba(255,255,255,0.08);
+            color: white;
+            border-radius: 999px;
+            padding: 6px 12px;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.3px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .floor-tab:hover {
+            border-color: rgba(102, 126, 234, 0.7);
+        }
+
+        .floor-tab.active {
+            background: rgba(102, 126, 234, 0.26);
+            border-color: rgba(102, 126, 234, 0.9);
+        }
+
+        .map-shell {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            border-radius: 14px;
+            border: 2px solid rgba(170, 190, 255, 0.2);
+            background:
+                linear-gradient(0deg, rgba(255,255,255,0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+            background-size: 16px 16px;
+        }
+
+        .map-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: rgba(255,255,255,0.65);
+        }
+
+        .room-zone {
+            position: absolute;
+            background: rgba(255,255,255,0.05);
+            border-radius: 12px;
+            padding: 10px;
+            border: 2px solid transparent;
+            transition: all 0.2s;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            min-height: 92px;
+        }
+
+        .room-zone:hover {
+            border-color: rgba(102, 126, 234, 0.7);
+        }
+
+        .room-zone.selected {
+            border-color: #667eea;
+            box-shadow: 0 0 20px rgba(102, 126, 234, 0.3);
+            background: rgba(102, 126, 234, 0.16);
+        }
+
+        .zone-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .zone-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .room-icon {
+            font-size: 19px;
+        }
+
+        .room-name {
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .zone-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #8b97ff;
+            box-shadow: 0 0 8px rgba(139, 151, 255, 0.8);
+        }
+
+        .zone-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 12px;
+            font-size: 11px;
+            color: rgba(255,255,255,0.78);
+        }
+
+        .zone-badges {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .zone-badge {
+            font-size: 10px;
+            font-weight: 600;
+            padding: 4px 6px;
+            border-radius: 999px;
+            border: 1px solid rgba(255,255,255,0.2);
+            background: rgba(255,255,255,0.08);
+        }
+
+        .zone-badge.online {
+            background: rgba(16, 185, 129, 0.2);
+            border-color: rgba(16, 185, 129, 0.45);
+        }
+
+        .zone-badge.warning {
+            background: rgba(245, 158, 11, 0.2);
+            border-color: rgba(245, 158, 11, 0.4);
+        }
+
+        .room-inspector {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 16px;
+            padding: 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            min-height: 450px;
+        }
+
+        .inspector-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 8px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid rgba(255,255,255,0.12);
+        }
+
+        .inspector-room {
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        .inspector-sub {
+            color: rgba(255,255,255,0.66);
+            font-size: 12px;
+            margin-top: 3px;
+        }
+
+        .motion-chip {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 6px 8px;
+            border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.2);
+            background: rgba(255,255,255,0.08);
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+        }
+
+        .metric {
+            background: rgba(255,255,255,0.05);
+            border-radius: 10px;
+            padding: 10px;
+            border: 1px solid rgba(255,255,255,0.08);
+        }
+
+        .metric .label {
+            color: rgba(255,255,255,0.65);
+            font-size: 11px;
+            margin-bottom: 4px;
+        }
+
+        .metric .value {
+            font-size: 16px;
+            font-weight: 700;
+        }
+
+        .device-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .device {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 10px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .device.on {
+            background: rgba(16, 185, 129, 0.2);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .device-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .device-icon {
+            font-size: 18px;
+        }
+
+        .device-name {
+            font-size: 13px;
+        }
+
+        .device-state {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.7px;
+            color: rgba(255,255,255,0.72);
+        }
+
+        .scene-row {
+            margin-top: auto;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+        }
+
+        .scene-btn {
+            border: 1px solid rgba(255,255,255,0.2);
+            background: rgba(255,255,255,0.08);
+            color: white;
+            border-radius: 10px;
+            padding: 9px 8px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .scene-btn:hover {
+            border-color: rgba(102, 126, 234, 0.8);
+            background: rgba(102, 126, 234, 0.2);
+        }
+
+        .gesture-guide {
+            background: rgba(30, 30, 50, 0.8);
+            border-radius: 20px;
+            padding: 20px;
+            border: 1px solid rgba(255,255,255,0.1);
+            margin-bottom: 30px;
+        }
+
+        .gesture-guide h2 {
+            font-size: 20px;
+            margin-bottom: 15px;
+        }
+
+        .gesture-list {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+        }
+
+        .gesture-item {
+            background: rgba(255,255,255,0.05);
+            border-radius: 15px;
+            padding: 15px;
+            text-align: center;
+            border-left: 3px solid #667eea;
+        }
+
+        .gesture-icon-large {
+            font-size: 36px;
+            margin-bottom: 8px;
+        }
+
+        .gesture-name {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .gesture-desc {
+            font-size: 12px;
+            color: rgba(255,255,255,0.6);
+        }
+
+        .log {
+            background: rgba(30, 30, 50, 0.8);
+            border-radius: 20px;
+            padding: 20px;
+            border: 1px solid rgba(255,255,255,0.1);
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .log h2 {
+            font-size: 20px;
+            margin-bottom: 15px;
+        }
+
+        .log-entry {
+            padding: 12px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 10px;
+            margin-bottom: 10px;
+            border-left: 3px solid #667eea;
+            transition: background 0.18s, border-color 0.18s;
+        }
+
+        .log-entry.interactive {
+            cursor: pointer;
+            border-left-color: #10b981;
+        }
+
+        .log-entry.interactive:hover {
+            background: rgba(16, 185, 129, 0.12);
+            border-left-color: #34d399;
+        }
+
+        .log-time {
+            font-size: 11px;
+            color: rgba(255,255,255,0.5);
+            margin-bottom: 4px;
+        }
+
+        .log-message {
+            font-size: 13px;
+        }
+
+        .log-action {
+            font-size: 11px;
+            color: #34d399;
+            margin-top: 5px;
+            font-weight: 600;
+            letter-spacing: 0.4px;
+        }
+
+        /* clickable device rows */
+        .device.clickable {
+            cursor: pointer;
+            transition: background 0.18s, border-color 0.18s, transform 0.15s;
+            user-select: none;
+        }
+
+        .device.clickable:hover {
+            transform: scale(1.02);
+            border-color: rgba(102, 126, 234, 0.5);
+        }
+
+        .device.clickable:active { transform: scale(0.98); }
+
+        .device.clickable.on:hover {
+            border-color: rgba(16, 185, 129, 0.6);
+        }
+
+        @media (max-width: 1200px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .floor-layout {
+                grid-template-columns: 1fr;
+            }
+
+            .floor-map,
+            .room-inspector {
+                min-height: 360px;
+            }
+        }
+
+        @media (max-width: 760px) {
+            .house-status-row,
+            .metrics-grid,
+            .scene-row {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .map-topbar {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .gesture-list {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🏠 Smart Home AI</h1>
+            <p class="subtitle">Control your home with hand gestures</p>
+        </header>
+
+        <div class="main-grid">
+            <div class="camera-card">
+                <div class="camera-header">
+                    <h2>📷 Camera Feed</h2>
+                    <div>
+                        <button class="btn btn-primary" id="startBtn" onclick="startCamera()">Start</button>
+                        <button class="btn btn-danger" id="stopBtn" onclick="stopCamera()" style="display:none;">Stop</button>
+                    </div>
+                </div>
+
+                <div class="video-container">
+                    <div class="placeholder" id="placeholder">
+                        <div class="placeholder-icon">📹</div>
+                        <p>Click Start to begin</p>
+                    </div>
+                    <video id="video" autoplay playsinline style="display:none;"></video>
+                    <canvas id="canvas"></canvas>
+                </div>
+
+                <div class="gesture-display">
+                    <div class="hold-ring-wrap">
+                        <svg class="hold-ring-svg" viewBox="0 0 90 90">
+                            <circle class="hold-ring-bg" cx="45" cy="45" r="40"/>
+                            <circle class="hold-ring-arc" id="holdRingArc" cx="45" cy="45" r="40"/>
+                        </svg>
+                        <div class="gesture-icon" id="gestureIcon">👋</div>
+                    </div>
+                    <div id="gestureText">Waiting for gesture...</div>
+                    <div class="eye-status" id="eyeStatus">👁 Eyes closed — <span id="eyeCountdown">3</span>s</div>
+                    <div class="pipeline-status" id="pipelineStatus">Pipeline: idle</div>
+                </div>
+            </div>
+
+            <div class="house-card">
+                <h2>📍 House Map</h2>
+                <p class="house-subtitle">Floor plan view with live room telemetry and occupancy insights</p>
+
+                <div class="house-status-row" id="houseStatusRow"></div>
+
+                <div class="floor-layout">
+                    <div class="floor-map">
+                        <div class="map-topbar">
+                            <div class="floor-tabs" id="floorTabs"></div>
+                            <div class="map-label" id="mapLabel">Floor 01</div>
+                        </div>
+                        <div class="map-shell" id="floorMap"></div>
+                    </div>
+
+                    <aside class="room-inspector">
+                        <div id="roomInspector"></div>
+                        <div class="scene-row">
+                            <button class="scene-btn" onclick="applyScene('movie')">🎬 Movie Scene</button>
+                            <button class="scene-btn" onclick="applyScene('away')">🧳 Away Mode</button>
+                            <button class="scene-btn" onclick="applyScene('morning')">🌤️ Morning</button>
+                            <button class="scene-btn" onclick="applyScene('night')">🌙 Night</button>
+                        </div>
+                    </aside>
+                </div>
+            </div>
+        </div>
+
+        <div class="gesture-guide">
+            <h2>🖐️ Gesture Commands <span style="font-size:13px;font-weight:400;color:rgba(255,255,255,0.55);margin-left:8px;">Hold each gesture 2 seconds to trigger</span></h2>
+            <div class="gesture-list">
+                <div class="gesture-item">
+                    <div class="gesture-icon-large">👋</div>
+                    <div class="gesture-name">Wave</div>
+                    <div class="gesture-desc">Toggle Living Room light</div>
+                </div>
+                <div class="gesture-item">
+                    <div class="gesture-icon-large">☝️</div>
+                    <div class="gesture-name">Point</div>
+                    <div class="gesture-desc">Next room or next floor</div>
+                </div>
+                <div class="gesture-item">
+                    <div class="gesture-icon-large">👍</div>
+                    <div class="gesture-name">Thumbs Up</div>
+                    <div class="gesture-desc">Open all curtains/blinds</div>
+                </div>
+                <div class="gesture-item">
+                    <div class="gesture-icon-large">👎</div>
+                    <div class="gesture-name">Thumbs Down</div>
+                    <div class="gesture-desc">Close all curtains/blinds</div>
+                </div>
+                <div class="gesture-item">
+                    <div class="gesture-icon-large">✊</div>
+                    <div class="gesture-name">Fist</div>
+                    <div class="gesture-desc">All lights OFF</div>
+                </div>
+                <div class="gesture-item">
+                    <div class="gesture-icon-large">✋</div>
+                    <div class="gesture-name">Open Hand</div>
+                    <div class="gesture-desc">All lights ON</div>
+                </div>
+                <div class="gesture-item">
+                    <div class="gesture-icon-large">😴</div>
+                    <div class="gesture-name">Eyes Closed</div>
+                    <div class="gesture-desc">Hold 3s → all lights OFF</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="log">
+            <h2>📋 Activity Log</h2>
+            <div id="logList">
+                <div class="log-entry">
+                    <div class="log-time">Just now</div>
+                    <div class="log-message">Welcome to Smart Home AI!</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let video = null;
+        let canvas = null;
+        let ctx = null;
+        let isRunning = false;
+        let currentFloorIndex = 0;
+        let selectedRoomByFloor = [];
+        let lastGestureTime = 0;
+        let gestureSequence = [];
+        let mediaPipeLoaded = false;
+        let handsModel = null;
+        let faceMeshModel = null;
+        let frameTick = 0;
+        let lastLandmarkCount = 0;
+
+        // Hold-to-trigger state
+        const HOLD_DURATION = 2000;   // ms to hold gesture
+        const EYE_DURATION  = 3000;   // ms eyes must stay closed
+        let holdGesture = null;        // which gesture is being held
+        let holdStart   = 0;           // when hold began
+        let eyeClosedStart = 0;        // when eyes first closed
+        let eyeFired    = false;       // prevent re-fire until eyes reopen
+
+        // House data
+        const houseData = {
+            floors: [
+                {
+                    id: 'floor-01',
+                    name: 'Floor 01',
+                    rooms: [
+                        {
+                            name: 'Living Room',
+                            icon: '🛋️',
+                            position: { top: 18, left: 14, width: 52, height: 34 },
+                            temperature: 23,
+                            humidity: 44,
+                            occupancy: 2,
+                            airQuality: 'Good',
+                            energy: '1.8 kWh',
+                            lastMotion: '15 sec ago',
+                            devices: [
+                                { id: 'light', name: 'Light', icon: '💡', state: false },
+                                { id: 'tv', name: 'TV', icon: '📺', state: false },
+                                { id: 'curtain', name: 'Curtains', icon: '🪟', state: 'closed' }
+                            ]
+                        },
+                        {
+                            name: 'Kitchen',
+                            icon: '🍳',
+                            position: { top: 18, left: 68, width: 18, height: 34 },
+                            temperature: 25,
+                            humidity: 47,
+                            occupancy: 0,
+                            airQuality: 'Moderate',
+                            energy: '2.4 kWh',
+                            lastMotion: '4 min ago',
+                            devices: [
+                                { id: 'light', name: 'Light', icon: '💡', state: false },
+                                { id: 'fan', name: 'Fan', icon: '🌀', state: false }
+                            ]
+                        },
+                        {
+                            name: 'Bedroom',
+                            icon: '🛏️',
+                            position: { top: 56, left: 14, width: 38, height: 30 },
+                            temperature: 22,
+                            humidity: 46,
+                            occupancy: 1,
+                            airQuality: 'Good',
+                            energy: '1.2 kWh',
+                            lastMotion: '1 min ago',
+                            devices: [
+                                { id: 'light', name: 'Light', icon: '💡', state: false },
+                                { id: 'ac', name: 'AC', icon: '❄️', state: false },
+                                { id: 'curtain', name: 'Curtains', icon: '🪟', state: 'closed' }
+                            ]
+                        },
+                        {
+                            name: 'Bathroom',
+                            icon: '🚿',
+                            position: { top: 56, left: 54, width: 32, height: 30 },
+                            temperature: 24,
+                            humidity: 58,
+                            occupancy: 0,
+                            airQuality: 'Good',
+                            energy: '0.6 kWh',
+                            lastMotion: '8 min ago',
+                            devices: [
+                                { id: 'light', name: 'Light', icon: '💡', state: false },
+                                { id: 'fan', name: 'Fan', icon: '🌀', state: false }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    id: 'floor-02',
+                    name: 'Floor 02',
+                    rooms: [
+                        {
+                            name: 'Home Office',
+                            icon: '💼',
+                            position: { top: 18, left: 14, width: 40, height: 34 },
+                            temperature: 22,
+                            humidity: 42,
+                            occupancy: 1,
+                            airQuality: 'Good',
+                            energy: '2.0 kWh',
+                            lastMotion: '22 sec ago',
+                            devices: [
+                                { id: 'light', name: 'Desk Light', icon: '💡', state: true },
+                                { id: 'pc', name: 'Workstation', icon: '🖥️', state: true },
+                                { id: 'blind', name: 'Blinds', icon: '🪟', state: 'open' }
+                            ]
+                        },
+                        {
+                            name: 'Guest Room',
+                            icon: '🧳',
+                            position: { top: 18, left: 58, width: 28, height: 34 },
+                            temperature: 21,
+                            humidity: 45,
+                            occupancy: 0,
+                            airQuality: 'Good',
+                            energy: '0.7 kWh',
+                            lastMotion: '19 min ago',
+                            devices: [
+                                { id: 'light', name: 'Light', icon: '💡', state: false },
+                                { id: 'heater', name: 'Heater', icon: '🔥', state: false },
+                                { id: 'curtain', name: 'Curtains', icon: '🪟', state: 'closed' }
+                            ]
+                        },
+                        {
+                            name: 'Hallway',
+                            icon: '🧭',
+                            position: { top: 56, left: 14, width: 28, height: 30 },
+                            temperature: 23,
+                            humidity: 40,
+                            occupancy: 0,
+                            airQuality: 'Good',
+                            energy: '0.3 kWh',
+                            lastMotion: '3 min ago',
+                            devices: [
+                                { id: 'light', name: 'Spotlights', icon: '💡', state: true },
+                                { id: 'cam', name: 'Camera', icon: '📷', state: true }
+                            ]
+                        },
+                        {
+                            name: 'Balcony',
+                            icon: '🌿',
+                            position: { top: 56, left: 46, width: 40, height: 30 },
+                            temperature: 20,
+                            humidity: 54,
+                            occupancy: 0,
+                            airQuality: 'Fresh',
+                            energy: '0.4 kWh',
+                            lastMotion: '7 min ago',
+                            devices: [
+                                { id: 'light', name: 'Ambient Strip', icon: '💡', state: true },
+                                { id: 'sprinkler', name: 'Sprinkler', icon: '💧', state: false }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        };
+
+        // Initialize
+        function init() {
+            video = document.getElementById('video');
+            canvas = document.getElementById('canvas');
+            ctx = canvas.getContext('2d');
+            selectedRoomByFloor = houseData.floors.map(() => 0);
+            renderHouseMap();
+            updatePipelineStatus('idle');
+        }
+
+        function updatePipelineStatus(message) {
+            const status = document.getElementById('pipelineStatus');
+            if (status) status.textContent = `Pipeline: ${message}`;
+        }
+
+        function getRoomOnlineCount(room) {
+            return room.devices.filter((device) => {
+                if (device.id === 'curtain' || device.id === 'blind') {
+                    return device.state === 'open';
+                }
+                return device.state;
+            }).length;
+        }
+
+        function getCurrentFloor() {
+            return houseData.floors[currentFloorIndex];
+        }
+
+        function getCurrentRooms() {
+            return getCurrentFloor().rooms;
+        }
+
+        function getSelectedRoomIndex() {
+            const rooms = getCurrentRooms();
+            if (rooms.length === 0) return 0;
+            const rawIndex = selectedRoomByFloor[currentFloorIndex] ?? 0;
+            return Math.max(0, Math.min(rawIndex, rooms.length - 1));
+        }
+
+        function formatOccupancyLabel(count) {
+            return `${count} ${count === 1 ? 'person' : 'people'}`;
+        }
+
+        function renderFloorTabs() {
+            const floorTabs = document.getElementById('floorTabs');
+            floorTabs.innerHTML = '';
+
+            houseData.floors.forEach((floor, index) => {
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.className = `floor-tab ${index === currentFloorIndex ? 'active' : ''}`;
+                button.textContent = floor.name;
+                button.addEventListener('click', () => switchFloor(index));
+                floorTabs.appendChild(button);
+            });
+
+            document.getElementById('mapLabel').textContent = getCurrentFloor().name;
+        }
+
+        function switchFloor(index) {
+            if (index === currentFloorIndex) return;
+            currentFloorIndex = index;
+            renderHouseMap();
+            log(`🏢 Switched to ${getCurrentFloor().name}`);
+        }
+
+        function renderHouseStatus() {
+            const allRooms = houseData.floors.flatMap((floor) => floor.rooms);
+            const totalRooms = allRooms.length;
+            const occupied = allRooms.filter((room) => room.occupancy > 0).length;
+            const activeDevices = allRooms.reduce((acc, room) => acc + getRoomOnlineCount(room), 0);
+            const totalEnergy = allRooms.reduce((acc, room) => acc + Number.parseFloat(room.energy), 0).toFixed(1);
+
+            const row = document.getElementById('houseStatusRow');
+            row.innerHTML = `
+                <div class="status-pill">
+                    <div class="status-label">Rooms</div>
+                    <div class="status-value">${totalRooms}</div>
+                </div>
+                <div class="status-pill">
+                    <div class="status-label">Occupied</div>
+                    <div class="status-value">${occupied}</div>
+                </div>
+                <div class="status-pill">
+                    <div class="status-label">Online Devices</div>
+                    <div class="status-value">${activeDevices}</div>
+                </div>
+                <div class="status-pill">
+                    <div class="status-label">Energy Today</div>
+                    <div class="status-value">${totalEnergy} kWh</div>
+                </div>
+            `;
+        }
+
+        function renderFloorMap() {
+            const floorMap = document.getElementById('floorMap');
+            floorMap.innerHTML = '';
+            const rooms = getCurrentRooms();
+
+            rooms.forEach((room, index) => {
+                const zone = document.createElement('button');
+                zone.type = 'button';
+                zone.className = `room-zone ${index === getSelectedRoomIndex() ? 'selected' : ''}`;
+                zone.style.top = `${room.position.top}%`;
+                zone.style.left = `${room.position.left}%`;
+                zone.style.width = `${room.position.width}%`;
+                zone.style.height = `${room.position.height}%`;
+
+                const onlineCount = getRoomOnlineCount(room);
+                const badgeTone = room.humidity > 55 ? 'warning' : 'online';
+
+                zone.innerHTML = `
+                    <div class="zone-header">
+                        <div class="zone-title">
+                            <span class="room-icon">${room.icon}</span>
+                            <span class="room-name">${room.name}</span>
+                        </div>
+                        <span class="zone-dot"></span>
+                    </div>
+                    <div class="zone-meta">
+                        <div class="zone-badges">
+                            <span class="zone-badge online">${onlineCount}/${room.devices.length} online</span>
+                            <span class="zone-badge ${badgeTone}">${room.humidity}% humidity</span>
+                        </div>
+                    </div>
+                `;
+
+                zone.addEventListener('click', () => selectRoom(index));
+                floorMap.appendChild(zone);
+            });
+        }
+
+        function renderRoomInspector() {
+            const rooms = getCurrentRooms();
+            const room = rooms[getSelectedRoomIndex()];
+            const onlineCount = getRoomOnlineCount(room);
+
+            const roomIndex = getSelectedRoomIndex();
+            const devices = room.devices.map((device) => {
+                const isOn = (device.id === 'curtain' || device.id === 'blind') ? device.state === 'open' : device.state;
+                const stateText = (device.id === 'curtain' || device.id === 'blind')
+                    ? (device.state === 'open' ? 'Open' : 'Closed')
+                    : (device.state ? 'On' : 'Off');
+
+                return `
+                    <div class="device clickable ${isOn ? 'on' : ''}"
+                         onclick="toggleDevice(${currentFloorIndex}, ${roomIndex}, '${device.id}')"
+                         title="Click to toggle ${device.name}">
+                        <div class="device-info">
+                            <span class="device-icon">${device.icon}</span>
+                            <span class="device-name">${device.name}</span>
+                        </div>
+                        <span class="device-state">${stateText}</span>
+                    </div>
+                `;
+            }).join('');
+
+            const inspector = document.getElementById('roomInspector');
+            inspector.innerHTML = `
+                <div class="inspector-head">
+                    <div>
+                        <div class="inspector-room">${room.icon} ${room.name}</div>
+                        <div class="inspector-sub">${onlineCount}/${room.devices.length} active devices</div>
+                    </div>
+                    <span class="motion-chip">Motion ${room.lastMotion}</span>
+                </div>
+
+                <div class="metrics-grid">
+                    <div class="metric">
+                        <div class="label">Temperature</div>
+                        <div class="value">${room.temperature}°C</div>
+                    </div>
+                    <div class="metric">
+                        <div class="label">Humidity</div>
+                        <div class="value">${room.humidity}%</div>
+                    </div>
+                    <div class="metric">
+                        <div class="label">Occupancy</div>
+                        <div class="value">${formatOccupancyLabel(room.occupancy)}</div>
+                    </div>
+                    <div class="metric">
+                        <div class="label">Air Quality</div>
+                        <div class="value">${room.airQuality}</div>
+                    </div>
+                </div>
+
+                <div class="metric">
+                    <div class="label">Energy Draw</div>
+                    <div class="value">${room.energy}</div>
+                </div>
+
+                <div class="device-list">${devices}</div>
+            `;
+        }
+
+        function renderHouseMap() {
+            renderHouseStatus();
+            renderFloorTabs();
+            renderFloorMap();
+            renderRoomInspector();
+        }
+
+        function selectRoom(index) {
+            selectedRoomByFloor[currentFloorIndex] = index;
+            renderHouseMap();
+            const room = getCurrentRooms()[index];
+            logRich({
+                message: `📍 Viewing <strong>${room.name}</strong> — ${getCurrentFloor().name}`,
+                room,
+                floorIndex: currentFloorIndex,
+            });
+        }
+
+        function applyScene(scene) {
+            switch (scene) {
+                case 'movie':
+                    houseData.floors.forEach((floor) => floor.rooms.forEach((room) => {
+                        room.devices.forEach((device) => {
+                            if (device.id === 'light') device.state = false;
+                            if (device.id === 'curtain' || device.id === 'blind') device.state = 'closed';
+                            if (device.id === 'tv' && room.name === 'Living Room') device.state = true;
+                        });
+                    }));
+                    log('🎬 Movie Scene — lights off, curtains closed, TV on');
+                    break;
+                case 'away':
+                    houseData.floors.forEach((floor) => floor.rooms.forEach((room) => {
+                        room.devices.forEach((device) => {
+                            if (device.id === 'curtain' || device.id === 'blind') {
+                                device.state = 'closed';
+                            } else {
+                                device.state = false;
+                            }
+                        });
+                    }));
+                    log('🚪 Away Mode — all devices off, home secured');
+                    break;
+                case 'morning':
+                    houseData.floors.forEach((floor) => floor.rooms.forEach((room) => {
+                        room.devices.forEach((device) => {
+                            if (device.id === 'light') device.state = true;
+                            if (device.id === 'curtain' || device.id === 'blind') device.state = 'open';
+                        });
+                    }));
+                    log('🌅 Morning Scene — all lights on, curtains open');
+                    // Open room view for current room (lights are on)
+                    openRoomView(getCurrentRooms()[getSelectedRoomIndex()], currentFloorIndex);
+                    break;
+                case 'night':
+                    houseData.floors.forEach((floor) => floor.rooms.forEach((room) => {
+                        room.devices.forEach((device) => {
+                            if (device.id === 'light') device.state = false;
+                            if (device.id === 'curtain' && room.name !== 'Living Room') device.state = 'closed';
+                            if (device.id === 'blind') device.state = 'closed';
+                        });
+                    }));
+                    log('🌙 Night Scene — lights off, curtains closed');
+                    break;
+                default:
+                    break;
+            }
+
+            renderHouseMap();
+        }
+
+        async function startCamera() {
+            try {
+                updatePipelineStatus('requesting camera permission');
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: 'user', width: 1280, height: 720 }
+                });
+
+                video.srcObject = stream;
+                await video.play();
+                const width = video.videoWidth || 1280;
+                const height = video.videoHeight || 720;
+                canvas.width = width;
+                canvas.height = height;
+
+                document.getElementById('placeholder').style.display = 'none';
+                video.style.display = 'block';
+
+                document.getElementById('startBtn').style.display = 'none';
+                document.getElementById('stopBtn').style.display = 'inline-block';
+
+                isRunning = true;
+                frameTick = 0;
+                lastLandmarkCount = 0;
+                log('Camera started');
+                updatePipelineStatus('camera ready, loading model');
+
+                // Load MediaPipe and start detection
+                loadMediaPipe();
+
+            } catch (error) {
+                alert('Camera access denied: ' + error.message);
+                log('Error: ' + error.message);
+                updatePipelineStatus(`camera error (${error.message})`);
+            }
+        }
+
+        function stopCamera() {
+            isRunning = false;
+
+            if (video.srcObject) {
+                const tracks = video.srcObject.getTracks();
+                tracks.forEach(track => track.stop());
+                video.srcObject = null;
+            }
+
+            document.getElementById('placeholder').style.display = 'flex';
+            video.style.display = 'none';
+
+            document.getElementById('startBtn').style.display = 'inline-block';
+            document.getElementById('stopBtn').style.display = 'none';
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            log('Camera stopped');
+            updatePipelineStatus('stopped');
+        }
+
+        function loadMediaPipe() {
+            if (mediaPipeLoaded && handsModel) {
+                updatePipelineStatus('model ready, scanning');
+                startFrameLoop();
+                return;
+            }
+
+            const existingScript = document.querySelector('script[data-mediapipe-hands="1"]');
+            if (existingScript) {
+                updatePipelineStatus('waiting for model script');
+                return;
+            }
+
+            const script = document.createElement('script');
+            script.src = 'https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js';
+            script.dataset.mediapipeHands = '1';
+            script.onload = () => {
+                try {
+                    handsModel = new Hands({locateFile: (file) => {
+                        return `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`;
+                    }});
+
+                    handsModel.setOptions({
+                        maxNumHands: 1,
+                        modelComplexity: 1,
+                        minDetectionConfidence: 0.5,
+                        minTrackingConfidence: 0.5
+                    });
+
+                    handsModel.onResults(onResults);
+                    mediaPipeLoaded = true;
+                    updatePipelineStatus('model ready, scanning');
+                    startFrameLoop();
+
+                    // Load FaceMesh for eye-closed detection
+                    const fmScript = document.createElement('script');
+                    fmScript.src = 'https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js';
+                    fmScript.onload = () => loadFaceMesh();
+                    document.head.appendChild(fmScript);
+                } catch (error) {
+                    updatePipelineStatus('model init failed');
+                    log(`MediaPipe init error: ${error.message}`);
+                }
+            };
+            script.onerror = () => {
+                updatePipelineStatus('model script load failed');
+                log('MediaPipe hands.js failed to load');
+            };
+            document.head.appendChild(script);
+        }
+
+        function startFrameLoop() {
+            async function sendFrames() {
+                if (!isRunning || !handsModel) return;
+                if (!video || video.readyState < 2 || video.videoWidth === 0) {
+                    requestAnimationFrame(sendFrames);
+                    return;
+                }
+
+                try {
+                    await handsModel.send({image: video});
+                    // Also feed face mesh when loaded
+                    if (faceMeshModel) {
+                        await faceMeshModel.send({image: video});
+                    }
+                } catch (error) {
+                    updatePipelineStatus('frame processing error');
+                    log(`Frame error: ${error.message}`);
+                }
+
+                requestAnimationFrame(sendFrames);
+            }
+
+            sendFrames();
+        }
+
+        function onResults(results) {
+            frameTick += 1;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
+                const landmarks = results.multiHandLandmarks[0];
+                lastLandmarkCount = landmarks.length;
+
+                // Draw hand skeleton
+                ctx.fillStyle = '#10b981';
+                for (let i = 0; i < landmarks.length; i++) {
+                    ctx.beginPath();
+                    ctx.arc(landmarks[i].x * canvas.width, landmarks[i].y * canvas.height, 5, 0, 2 * Math.PI);
+                    ctx.fill();
+                }
+
+                ctx.strokeStyle = '#667eea';
+                ctx.lineWidth = 3;
+
+                const connections = [
+                    [0,1],[1,2],[2,3],[3,4],[0,5],[5,6],[6,7],[7,8],
+                    [5,9],[9,10],[10,11],[11,12],[9,13],[13,14],[14,15],[15,16],
+                    [13,17],[17,18],[18,19],[19,20],[0,17]
+                ];
+
+                for (const [start, end] of connections) {
+                    ctx.beginPath();
+                    ctx.moveTo(landmarks[start].x * canvas.width, landmarks[start].y * canvas.height);
+                    ctx.lineTo(landmarks[end].x * canvas.width, landmarks[end].y * canvas.height);
+                    ctx.stroke();
+                }
+
+                // Hold-to-trigger detection (2 second hold)
+                const rawGesture = classifyGesture(results.multiHandLandmarks);
+                updateHoldGesture(rawGesture);
+            } else {
+                lastLandmarkCount = 0;
+                // No hand — reset hold
+                updateHoldGesture(null);
+            }
+
+            if (frameTick % 30 === 0) {
+                updatePipelineStatus(lastLandmarkCount > 0
+                    ? `detecting hand (${lastLandmarkCount} landmarks)`
+                    : 'camera active, no hand detected');
+            }
+        }
+
+        /* Update the hold-ring progress and fire when 2s reached */
+        function updateHoldGesture(gesture) {
+            const arc = document.getElementById('holdRingArc');
+            const circumference = 251; // 2π×40
+            const now = Date.now();
+
+            if (!gesture) {
+                // reset
+                holdGesture = null;
+                holdStart   = 0;
+                arc.style.strokeDashoffset = circumference;
+                arc.classList.remove('eyes');
+                document.getElementById('gestureText').textContent = 'Waiting for gesture...';
+                return;
+            }
+
+            if (gesture !== holdGesture) {
+                holdGesture = gesture;
+                holdStart   = now;
+            }
+
+            const elapsed  = now - holdStart;
+            const progress = Math.min(elapsed / HOLD_DURATION, 1);
+            arc.style.strokeDashoffset = circumference * (1 - progress);
+            arc.classList.remove('eyes');
+
+            const gMeta = { wave:'👋 Wave', pointing:'☝️ Pointing', thumbsUp:'👍 Thumbs Up',
+                            thumbsDown:'👎 Thumbs Down', fist:'✊ Fist', openHand:'✋ Open Hand' };
+            const label = gMeta[gesture] || gesture;
+            const remaining = Math.max(0, Math.ceil((HOLD_DURATION - elapsed) / 1000));
+            document.getElementById('gestureText').textContent =
+                elapsed < HOLD_DURATION ? `${label} — hold ${remaining}s…` : label;
+
+            if (progress >= 1 && now - lastGestureTime > HOLD_DURATION) {
+                executeGesture(gesture);
+                holdGesture = null;
+                holdStart   = 0;
+                arc.style.strokeDashoffset = circumference;
+            }
+        }
+
+        /* Renamed: pure classifier, no debounce — hold logic handles timing */
+        function classifyGesture(landmarks) {
+            const now = Date.now();
+            const hand = landmarks[0];
+
+            const thumbTip = hand[4];
+            const indexTip = hand[8];
+            const middleTip = hand[12];
+            const ringTip = hand[16];
+            const pinkyTip = hand[20];
+
+            const indexBase = hand[5];
+            const middleBase = hand[9];
+            const ringBase = hand[13];
+            const pinkyBase = hand[17];
+
+            const indexExtended = indexTip.y < indexBase.y;
+            const middleExtended = middleTip.y < middleBase.y;
+            const ringExtended = ringTip.y < ringBase.y;
+            const pinkyExtended = pinkyTip.y < pinkyBase.y;
+            const thumbUp = thumbTip.y < hand[2].y;
+
+            const extendedCount = [indexExtended, middleExtended, ringExtended, pinkyExtended].filter(Boolean).length;
+
+            if (extendedCount === 0 && !thumbUp) return 'fist';
+            if (extendedCount === 4 && thumbUp) return 'openHand';
+            if (extendedCount === 1 && indexExtended) return 'pointing';
+            if (thumbUp && !indexExtended && !middleExtended && !ringExtended && !pinkyExtended) return 'thumbsUp';
+            if (!thumbUp && !indexExtended && !middleExtended && !ringExtended && !pinkyExtended) return 'thumbsDown';
+            if (extendedCount >= 3) {
+                gestureSequence.push({ x: hand[0].x, time: now });
+                if (gestureSequence.length > 5) {
+                    gestureSequence.shift();
+                    const recent = gestureSequence.slice(-5);
+                    const directions = [];
+                    for (let i = 1; i < recent.length; i++) {
+                        const diff = recent[i].x - recent[i-1].x;
+                        directions.push(diff > 0.01 ? 'right' : diff < -0.01 ? 'left' : 'still');
+                    }
+                    if (directions.includes('right') && directions.includes('left')) {
+                        gestureSequence = [];
+                        return 'wave';
+                    }
+                }
+            }
+
+            return null;
+        }
+
+        /* ─── Eye-closed detection via MediaPipe FaceMesh ─── */
+        function onFaceResults(faceResults) {
+            if (!faceResults.multiFaceLandmarks || faceResults.multiFaceLandmarks.length === 0) {
+                // No face — reset eye timer
+                eyeClosedStart = 0;
+                eyeFired = false;
+                hideEyeStatus();
+                return;
+            }
+
+            const face = faceResults.multiFaceLandmarks[0];
+            // EAR (Eye Aspect Ratio) landmarks for both eyes
+            // Left eye: 159 (top), 145 (bottom), 133 (left), 362 (right)
+            // Right eye: 386 (top), 374 (bottom), 362 (left), 263 (right)
+            const EAR_THRESHOLD = 0.20;
+
+            function eyeRatio(top, bottom, left, right) {
+                const height = Math.abs(face[top].y - face[bottom].y);
+                const width  = Math.abs(face[left].x - face[right].x);
+                return width > 0 ? height / width : 1;
+            }
+
+            const leftEAR  = eyeRatio(159, 145, 133, 33);
+            const rightEAR = eyeRatio(386, 374, 362, 263);
+            const avgEAR   = (leftEAR + rightEAR) / 2;
+            const eyesClosed = avgEAR < EAR_THRESHOLD;
+
+            const now = Date.now();
+
+            if (eyesClosed) {
+                if (eyeClosedStart === 0) eyeClosedStart = now;
+                const elapsed   = now - eyeClosedStart;
+                const remaining = Math.max(0, Math.ceil((EYE_DURATION - elapsed) / 1000));
+                showEyeStatus(remaining);
+
+                // update ring with amber colour
+                const arc = document.getElementById('holdRingArc');
+                const progress = Math.min(elapsed / EYE_DURATION, 1);
+                arc.style.strokeDashoffset = 251 * (1 - progress);
+                arc.classList.add('eyes');
+
+                if (elapsed >= EYE_DURATION && !eyeFired) {
+                    eyeFired = true;
+                    triggerEyesClosed();
+                }
+            } else {
+                eyeClosedStart = 0;
+                eyeFired = false;
+                hideEyeStatus();
+            }
+        }
+
+        function showEyeStatus(remaining) {
+            const badge = document.getElementById('eyeStatus');
+            badge.classList.add('visible');
+            document.getElementById('eyeCountdown').textContent = remaining;
+        }
+
+        function hideEyeStatus() {
+            document.getElementById('eyeStatus').classList.remove('visible');
+            const arc = document.getElementById('holdRingArc');
+            arc.classList.remove('eyes');
+        }
+
+        function triggerEyesClosed() {
+            hideEyeStatus();
+            // Turn off all lights — the "eyes closed = sleep" action
+            houseData.floors.forEach(floor => floor.rooms.forEach(room =>
+                room.devices.forEach(d => { if (d.id === 'light') d.state = false; })
+            ));
+            document.getElementById('gestureIcon').textContent = '😴';
+            document.getElementById('gestureText').textContent = 'Eyes closed — lights off';
+            log('😴 Eyes closed 3s — all lights turned OFF');
+            renderHouseMap();
+        }
+
+        async function loadFaceMesh() {
+            if (typeof window.FaceMesh === 'undefined') return; // CDN not loaded
+            try {
+                faceMeshModel = new window.FaceMesh({ locateFile: (f) =>
+                    `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${f}` });
+                faceMeshModel.setOptions({ maxNumFaces: 1, refineLandmarks: true,
+                    minDetectionConfidence: 0.5, minTrackingConfidence: 0.5 });
+                faceMeshModel.onResults(onFaceResults);
+                await faceMeshModel.initialize();
+            } catch (e) {
+                console.warn('FaceMesh init failed:', e);
+            }
+        }
+        /* ─────────────────────────────────────────────────── */
+
+        function executeGesture(gesture) {
+            lastGestureTime = Date.now();
+
+            const gestures = {
+                wave: { icon: '👋', name: 'Wave' },
+                pointing: { icon: '☝️', name: 'Pointing' },
+                thumbsUp: { icon: '👍', name: 'Thumbs Up' },
+                thumbsDown: { icon: '👎', name: 'Thumbs Down' },
+                fist: { icon: '✊', name: 'Fist' },
+                openHand: { icon: '✋', name: 'Open Hand' }
+            };
+
+            const g = gestures[gesture];
+            document.getElementById('gestureIcon').textContent = g.icon;
+            document.getElementById('gestureText').textContent = g.name;
+
+            switch(gesture) {
+                case 'wave': {
+                    const waveRoom = houseData.floors[0].rooms[0];
+                    const waveLight = waveRoom.devices.find(d => d.id === 'light');
+                    if (waveLight) waveLight.state = !waveLight.state;
+                    const waveOn = waveLight ? waveLight.state : false;
+                    logRich({
+                        message: `👋 Wave gesture — ${waveRoom.name} light ${waveOn ? '💡 turned ON' : '🌑 turned OFF'}`,
+                        room: waveRoom,
+                        floorIndex: 0,
+                    });
+                    if (waveOn) openRoomView(waveRoom, 0);
+                    break;
+                }
+                case 'pointing': {
+                    if (getSelectedRoomIndex() + 1 >= getCurrentRooms().length) {
+                        currentFloorIndex = (currentFloorIndex + 1) % houseData.floors.length;
+                        selectedRoomByFloor[currentFloorIndex] = 0;
+                        log(`☝️ Pointing — moved to ${getCurrentFloor().name}`);
+                    } else {
+                        selectedRoomByFloor[currentFloorIndex] = getSelectedRoomIndex() + 1;
+                        const pRoom = getCurrentRooms()[getSelectedRoomIndex()];
+                        logRich({
+                            message: `☝️ Pointing — selected <strong>${pRoom.name}</strong>`,
+                            room: pRoom,
+                            floorIndex: currentFloorIndex,
+                        });
+                    }
+                    break;
+                }
+                case 'thumbsUp':
+                    houseData.floors.forEach((floor) => floor.rooms.forEach((room) => room.devices.forEach((d) => {
+                        if (d.id === 'curtain' || d.id === 'blind') d.state = 'open';
+                    })));
+                    log('👍 Thumbs Up — all curtains & blinds opened');
+                    break;
+                case 'thumbsDown':
+                    houseData.floors.forEach((floor) => floor.rooms.forEach((room) => room.devices.forEach((d) => {
+                        if (d.id === 'curtain' || d.id === 'blind') d.state = 'closed';
+                    })));
+                    log('👎 Thumbs Down — all curtains & blinds closed');
+                    break;
+                case 'fist':
+                    houseData.floors.forEach((floor) => floor.rooms.forEach((room) => room.devices.forEach((d) => {
+                        if (d.id === 'light') d.state = false;
+                    })));
+                    log('✊ Fist — all lights switched OFF');
+                    break;
+                case 'openHand':
+                    houseData.floors.forEach((floor) => floor.rooms.forEach((room) => room.devices.forEach((d) => {
+                        if (d.id === 'light') d.state = true;
+                    })));
+                    log('✋ Open Hand — all lights switched ON');
+                    // Open room view for currently selected room
+                    openRoomView(getCurrentRooms()[getSelectedRoomIndex()], currentFloorIndex);
+                    break;
+            }
+
+                    renderHouseMap();
+        }
+
+        function log(message) {
+            logRich({ message });
+        }
+
+        function logRich({ message, room = null, floorIndex = null }) {
+            const now = new Date();
+            const time = now.toLocaleTimeString();
+
+            const logEntry = document.createElement('div');
+            const isInteractive = room !== null && floorIndex !== null;
+            logEntry.className = `log-entry${isInteractive ? ' interactive' : ''}`;
+
+            if (isInteractive) {
+                logEntry.title = `Click to view ${room.name}`;
+                logEntry.addEventListener('click', () => openRoomView(room, floorIndex));
+            }
+
+            logEntry.innerHTML = `
+                <div class="log-time">${time}</div>
+                <div class="log-message">${message}</div>
+                ${isInteractive ? '<div class="log-action">👁 View Room →</div>' : ''}
+            `;
+
+            const logList = document.getElementById('logList');
+            logList.insertBefore(logEntry, logList.firstChild);
+
+            while (logList.children.length > 20) {
+                logList.removeChild(logList.lastChild);
+            }
+        }
+
+        function getDeviceLabel(device, isNowOn) {
+            if (device.id === 'curtain' || device.id === 'blind') {
+                return isNowOn ? 'opened' : 'closed';
+            }
+            const labels = {
+                light: isNowOn ? ['💡', 'light turned ON'] : ['🌑', 'light turned OFF'],
+                fan:   isNowOn ? ['💨', 'fan started']     : ['⏹', 'fan stopped'],
+                ac:    isNowOn ? ['❄️', 'AC switched ON']   : ['⏹', 'AC switched OFF'],
+                tv:    isNowOn ? ['📺', 'TV turned ON']     : ['⏹', 'TV turned OFF'],
+                curtain: isNowOn ? ['🪟', 'curtains opened'] : ['🪟', 'curtains closed'],
+                blind:   isNowOn ? ['🪟', 'blinds opened']  : ['🪟', 'blinds closed'],
+            };
+            return labels[device.id] || (isNowOn ? ['✅', `${device.name} ON`] : ['⭕', `${device.name} OFF`]);
+        }
+
+        function toggleDevice(floorIndex, roomIndex, deviceId) {
+            const room = houseData.floors[floorIndex].rooms[roomIndex];
+            const device = room.devices.find(d => d.id === deviceId);
+            if (!device) return;
+
+            const isCurtainType = device.id === 'curtain' || device.id === 'blind';
+            if (isCurtainType) {
+                device.state = device.state === 'open' ? 'closed' : 'open';
+            } else {
+                device.state = !device.state;
+            }
+
+            const isNowOn = isCurtainType ? device.state === 'open' : device.state;
+            const [emoji, actionText] = getDeviceLabel(device, isNowOn);
+            const floor = houseData.floors[floorIndex];
+
+            logRich({
+                message: `${emoji} <strong>${room.name}</strong> — ${actionText}`,
+                room,
+                floorIndex,
+            });
+
+            // Open room visualizer when any light turns on
+            if (device.id === 'light' && isNowOn) {
+                openRoomView(room, floorIndex);
+            }
+
+            renderHouseMap();
+        }
+
+        function openRoomView(room, floorIndex) {
+            const floor = houseData.floors[floorIndex];
+            const lightDevice = room.devices.find(d => d.id === 'light');
+            const lightOn = lightDevice ? lightDevice.state : false;
+
+            const params = new URLSearchParams({
+                room: room.name,
+                icon: room.icon,
+                floor: floor.name,
+                light: lightOn ? 'on' : 'off',
+                temp: room.temperature,
+                humidity: room.humidity,
+                airQuality: room.airQuality,
+                energy: room.energy,
+            });
+
+            window.open(
+                `room-view.html?${params.toString()}`,
+                `room-view-${room.name.replace(/\s+/g, '-')}`,
+                'width=760,height=620,resizable=yes'
+            );
+        }
+
+        // Make functions global
+        window.startCamera = startCamera;
+        window.stopCamera = stopCamera;
+        window.applyScene = applyScene;
+        window.toggleDevice = toggleDevice;
+        window.openRoomView = openRoomView;
+        window.selectRoom = selectRoom;
+        window.switchFloor = switchFloor;
+
+        // Initialize on load
+        window.onload = init;
+    </script>
+</body>
+</html>

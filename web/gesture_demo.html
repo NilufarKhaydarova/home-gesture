@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+        h1 {
+            color: white;
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+        .subtitle {
+            color: rgba(255,255,255,0.7);
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            max-width: 1200px;
+            width: 100%;
+        }
+        .camera-container {
+            position: relative;
+            border-radius: 24px;
+            overflow: hidden;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+        }
+        #camera, #canvas {
+            display: block;
+            max-width: 100%;
+        }
+        #canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+        .status-bar {
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #ef4444;
+            box-shadow: 0 0 10px #ef4444;
+        }
+        .status-dot.active {
+            background: #10b981;
+            box-shadow: 0 0 10px #10b981;
+        }
+        .status-text {
+            color: white;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        .gesture-display {
+            background: rgba(255,255,255,0.05);
+            border-radius: 16px;
+            padding: 24px;
+            min-width: 300px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .gesture-display h2 {
+            color: white;
+            font-size: 18px;
+            margin-bottom: 16px;
+        }
+        .gesture-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 12px;
+            margin-bottom: 8px;
+            border-left: 4px solid #3b82f6;
+        }
+        .gesture-icon {
+            font-size: 24px;
+        }
+        .gesture-info h3 {
+            color: white;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+        .gesture-info p {
+            color: rgba(255,255,255,0.6);
+            font-size: 12px;
+        }
+        .controls {
+            display: flex;
+            gap: 12px;
+        }
+        button {
+            padding: 12px 24px;
+            border-radius: 16px;
+            border: none;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        button.start {
+            background: #10b981;
+            color: white;
+        }
+        button.stop {
+            background: #ef4444;
+            color: white;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+        .instructions {
+            background: rgba(255,255,255,0.05);
+            border-radius: 16px;
+            padding: 24px;
+            border: 1px solid rgba(255,255,255,0.1);
+            max-width: 600px;
+        }
+        .instructions h3 {
+            color: white;
+            margin-bottom: 16px;
+        }
+        .instructions ul {
+            list-style: none;
+            color: rgba(255,255,255,0.8);
+        }
+        .instructions li {
+            padding: 8px 0;
+            padding-left: 24px;
+            position: relative;
+        }
+        .instructions li::before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            color: #10b981;
+        }
+    </style>
+</head>
+<body>
+    <h1>🖐️ Hand Gesture Detection</h1>
+    <p class="subtitle">Real-time gesture recognition using MediaPipe</p>
+
+    <div class="container">
+        <div class="status-bar">
+            <div class="status-dot" id="statusDot"></div>
+            <span class="status-text" id="statusText">Initializing...</span>
+        </div>
+
+        <div class="camera-container">
+            <video id="camera" autoplay playsinline></video>
+            <canvas id="canvas"></canvas>
+        </div>
+
+        <div class="controls">
+            <button class="start" onclick="startCamera()">Start Camera</button>
+            <button class="stop" onclick="stopCamera()">Stop Camera</button>
+        </div>
+
+        <div class="gesture-display">
+            <h2>Detected Gestures</h2>
+            <div id="gestureList">
+                <div class="gesture-item">
+                    <span class="gesture-icon">🤷</span>
+                    <div class="gesture-info">
+                        <h3>No gesture detected</h3>
+                        <p>Start camera to begin</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="instructions">
+            <h3>Supported Gestures</h3>
+            <ul>
+                <li>✊ Closed Fist</li>
+                <li>✋ Open Hand</li>
+                <li>☝️ Pointing (index finger)</li>
+                <li>👍 Thumbs Up</li>
+                <li>✌️ Peace Sign</li>
+                <li>👌 OK Sign</li>
+            </ul>
+        </div>
+    </div>
+
+    <script type="module">
+        import { Hands } from 'https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js';
+        import { Camera } from 'https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js';
+        import { drawConnectors, drawLandmarks } from 'https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js';
+
+        const videoElement = document.getElementById('camera');
+        const canvasElement = document.getElementById('canvas');
+        const canvasCtx = canvasElement.getContext('2d');
+        const statusDot = document.getElementById('statusDot');
+        const statusText = document.getElementById('statusText');
+        const gestureList = document.getElementById('gestureList');
+
+        let camera = null;
+        let isRunning = false;
+
+        function updateStatus(active, message) {
+            if (active) {
+                statusDot.classList.add('active');
+            } else {
+                statusDot.classList.remove('active');
+            }
+            statusText.textContent = message;
+        }
+
+        function detectGesture(landmarks) {
+            if (!landmarks || landmarks.length === 0) return null;
+
+            const hand = landmarks[0];
+
+            // Get finger tip and base positions
+            const thumbTip = hand[4];
+            const indexTip = hand[8];
+            const middleTip = hand[12];
+            const ringTip = hand[16];
+            const pinkyTip = hand[20];
+
+            const indexBase = hand[5];
+            const middleBase = hand[9];
+            const ringBase = hand[13];
+            const pinkyBase = hand[17];
+
+            // Calculate which fingers are extended
+            const indexExtended = indexTip.y < indexBase.y;
+            const middleExtended = middleTip.y < middleBase.y;
+            const ringExtended = ringTip.y < ringBase.y;
+            const pinkyExtended = pinkyTip.y < pinkyBase.y;
+
+            // Check thumb position relative to index base
+            const thumbUp = thumbTip.y < hand[2].y;
+
+            // Count extended fingers
+            const extendedCount = [indexExtended, middleExtended, ringExtended, pinkyExtended]
+                .filter(Boolean).length;
+
+            // Detect specific gestures
+            if (extendedCount === 0 && !thumbUp) {
+                return { name: 'Closed Fist', icon: '✊', desc: 'All fingers curled' };
+            }
+
+            if (extendedCount === 4 && thumbUp) {
+                return { name: 'Open Hand', icon: '✋', desc: 'All fingers extended' };
+            }
+
+            if (extendedCount === 1 && indexExtended && !middleExtended && !ringExtended && !pinkyExtended) {
+                return { name: 'Pointing', icon: '☝️', desc: 'Index finger only' };
+            }
+
+            if (thumbUp && !indexExtended && !middleExtended && !ringExtended && !pinkyExtended) {
+                return { name: 'Thumbs Up', icon: '👍', desc: 'Thumb extended' };
+            }
+
+            if (indexExtended && middleExtended && !ringExtended && !pinkyExtended) {
+                // Check if index and middle are spread apart
+                const spread = Math.abs(indexTip.x - middleTip.x);
+                if (spread > 0.05) {
+                    return { name: 'Peace Sign', icon: '✌️', desc: 'Two fingers spread' };
+                }
+            }
+
+            if (thumbTip.x < indexTip.x && indexExtended && extendedCount <= 2) {
+                return { name: 'OK Sign', icon: '👌', desc: 'Thumb and index forming circle' };
+            }
+
+            return { name: 'Unknown', icon: '🤷', desc: 'Unrecognized gesture' };
+        }
+
+        function updateGestureDisplay(gesture) {
+            gestureList.innerHTML = `
+                <div class="gesture-item" style="border-left-color: ${gesture.name === 'Unknown' ? '#6b7280' : '#3b82f6'}">
+                    <span class="gesture-icon">${gesture.icon}</span>
+                    <div class="gesture-info">
+                        <h3>${gesture.name}</h3>
+                        <p>${gesture.desc}</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        function onResults(results) {
+            canvasCtx.save();
+            canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+
+            if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
+                for (const landmarks of results.multiHandLandmarks) {
+                    drawConnectors(canvasCtx, landmarks, HAND_CONNECTIONS,
+                        {color: '#00FF00', lineWidth: 2});
+                    drawLandmarks(canvasCtx, landmarks,
+                        {color: '#FF0000', lineWidth: 1, radius: 3});
+
+                    const gesture = detectGesture(results.multiHandLandmarks);
+                    if (gesture) {
+                        updateGestureDisplay(gesture);
+                    }
+                }
+            } else {
+                updateGestureDisplay({name: 'No hand detected', icon: '🤷', desc: 'Show your hand to camera'});
+            }
+
+            canvasCtx.restore();
+        }
+
+        const hands = new Hands({locateFile: (file) => {
+            return `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`;
+        }});
+
+        hands.setOptions({
+            maxNumHands: 2,
+            modelComplexity: 1,
+            minDetectionConfidence: 0.5,
+            minTrackingConfidence: 0.5
+        });
+
+        hands.onResults(onResults);
+
+        window.startCamera = async function() {
+            try {
+                updateStatus(false, 'Starting camera...');
+
+                camera = new Camera(videoElement, {
+                    onFrame: async () => {
+                        await hands.send({image: videoElement});
+                    },
+                    width: 1280,
+                    height: 720
+                });
+
+                await camera.start();
+                isRunning = true;
+                updateStatus(true, 'Detecting gestures...');
+
+                // Set canvas size to match video
+                videoElement.onloadedmetadata = () => {
+                    canvasElement.width = videoElement.videoWidth;
+                    canvasElement.height = videoElement.videoHeight;
+                };
+
+            } catch (error) {
+                updateStatus(false, 'Error: ' + error.message);
+                console.error(error);
+            }
+        };
+
+        window.stopCamera = function() {
+            if (camera) {
+                camera.stop();
+                camera = null;
+            }
+            isRunning = false;
+            updateStatus(false, 'Camera stopped');
+            updateGestureDisplay({name: 'No gesture detected', icon: '🤷', desc: 'Start camera to begin'});
+        };
+    </script>
+</body>
+</html>

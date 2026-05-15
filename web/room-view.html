@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Room View</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.8s ease;
+            overflow: hidden;
+        }
+
+        body.light-on {
+            background: linear-gradient(135deg, #1a1a2e 0%, #2d2d4e 100%);
+        }
+
+        body.light-off {
+            background: linear-gradient(135deg, #050510 0%, #0a0a1a 100%);
+        }
+
+        /* ── Room Scene ── */
+        .scene-wrapper {
+            position: relative;
+            width: 700px;
+            max-width: 96vw;
+        }
+
+        .room-scene {
+            position: relative;
+            width: 100%;
+            height: 420px;
+            border-radius: 24px;
+            overflow: hidden;
+            border: 2px solid rgba(255,255,255,0.08);
+            box-shadow: 0 0 80px rgba(0,0,0,0.8);
+        }
+
+        /* walls / floor */
+        .room-walls {
+            position: absolute;
+            inset: 0;
+            transition: background 0.8s ease, box-shadow 0.8s ease;
+        }
+
+        .light-on .room-walls {
+            background:
+                linear-gradient(180deg, #3a3060 0%, #2a2050 40%, #1e1a40 100%);
+            box-shadow: inset 0 -60px 120px rgba(255,220,100,0.15);
+        }
+
+        .light-off .room-walls {
+            background:
+                linear-gradient(180deg, #0d0b1a 0%, #0a0816 40%, #080610 100%);
+        }
+
+        /* ceiling light fixture */
+        .ceiling-light {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: opacity 0.6s;
+        }
+
+        .light-stem {
+            width: 3px;
+            height: 40px;
+            background: rgba(255,255,255,0.3);
+        }
+
+        .light-bulb {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            transition: background 0.6s, box-shadow 0.6s;
+        }
+
+        .light-on .light-bulb {
+            background: radial-gradient(circle, #ffe87a 0%, #ffcc00 60%, #ffaa00 100%);
+            box-shadow:
+                0 0 30px #ffcc00,
+                0 0 80px rgba(255,204,0,0.6),
+                0 0 200px rgba(255,204,0,0.2);
+        }
+
+        .light-off .light-bulb {
+            background: radial-gradient(circle, #2a2a3a 0%, #1a1a28 100%);
+            box-shadow: none;
+        }
+
+        /* ambient light cone */
+        .light-cone {
+            position: absolute;
+            top: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 200px solid transparent;
+            border-right: 200px solid transparent;
+            border-top: 300px solid rgba(255,220,80,0.07);
+            transition: opacity 0.8s;
+            pointer-events: none;
+        }
+
+        .light-on .light-cone { opacity: 1; }
+        .light-off .light-cone { opacity: 0; }
+
+        /* floor */
+        .floor-surface {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 110px;
+            border-radius: 0 0 22px 22px;
+            transition: background 0.8s;
+        }
+
+        .light-on .floor-surface {
+            background: linear-gradient(180deg,
+                rgba(255,220,100,0.06) 0%,
+                rgba(180,140,60,0.25) 100%);
+        }
+
+        .light-off .floor-surface {
+            background: linear-gradient(180deg,
+                rgba(0,0,0,0.2) 0%,
+                rgba(0,0,0,0.6) 100%);
+        }
+
+        /* furniture SVG area */
+        .furniture-layer {
+            position: absolute;
+            inset: 0;
+        }
+
+        /* ── Info panel ── */
+        .info-panel {
+            margin-top: 24px;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 18px;
+            padding: 20px 28px;
+            display: flex;
+            gap: 32px;
+            align-items: flex-start;
+            color: white;
+        }
+
+        .room-title-block .room-emoji { font-size: 42px; }
+        .room-title-block .room-label {
+            font-size: 22px;
+            font-weight: 700;
+            margin-top: 6px;
+        }
+        .room-title-block .floor-label {
+            font-size: 13px;
+            color: rgba(255,255,255,0.5);
+            margin-top: 2px;
+        }
+
+        .divider {
+            width: 1px;
+            background: rgba(255,255,255,0.12);
+            align-self: stretch;
+        }
+
+        .metrics {
+            display: grid;
+            grid-template-columns: repeat(2, 120px);
+            gap: 14px;
+            flex: 1;
+        }
+
+        .metric {
+            background: rgba(255,255,255,0.05);
+            border-radius: 12px;
+            padding: 10px 14px;
+        }
+
+        .metric .label {
+            font-size: 11px;
+            color: rgba(255,255,255,0.5);
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            margin-bottom: 4px;
+        }
+
+        .metric .value {
+            font-size: 18px;
+            font-weight: 700;
+            color: white;
+        }
+
+        /* light status badge */
+        .light-status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border-radius: 999px;
+            font-size: 14px;
+            font-weight: 700;
+            letter-spacing: 0.3px;
+            transition: all 0.6s;
+            margin-top: auto;
+            align-self: center;
+        }
+
+        .light-on .light-status-badge {
+            background: rgba(255,204,0,0.2);
+            border: 1px solid rgba(255,204,0,0.6);
+            color: #ffe066;
+        }
+
+        .light-off .light-status-badge {
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.15);
+            color: rgba(255,255,255,0.5);
+        }
+
+        .status-dot {
+            width: 9px;
+            height: 9px;
+            border-radius: 50%;
+            transition: background 0.6s, box-shadow 0.6s;
+        }
+
+        .light-on .status-dot {
+            background: #ffcc00;
+            box-shadow: 0 0 8px #ffcc00;
+        }
+
+        .light-off .status-dot {
+            background: rgba(255,255,255,0.3);
+        }
+
+        .close-btn {
+            position: fixed;
+            top: 16px;
+            right: 18px;
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 50%;
+            width: 38px;
+            height: 38px;
+            color: white;
+            font-size: 18px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+        }
+
+        .close-btn:hover { background: rgba(255,255,255,0.18); }
+
+        /* per-room furniture SVG colours */
+        .furniture-stroke { stroke: rgba(255,255,255,0.15); stroke-width: 1.5; fill: none; }
+
+        .light-on .furniture-stroke {
+            stroke: rgba(255,255,255,0.35);
+        }
+    </style>
+</head>
+<body class="light-off">
+
+<button class="close-btn" onclick="window.close()">✕</button>
+
+<div class="scene-wrapper" id="sceneWrapper">
+    <div class="room-scene" id="roomScene">
+        <div class="room-walls">
+            <div class="light-cone"></div>
+            <!-- ceiling light -->
+            <div class="ceiling-light">
+                <div class="light-stem"></div>
+                <div class="light-bulb"></div>
+            </div>
+            <!-- furniture SVG -->
+            <svg class="furniture-layer" id="furnitureSvg" viewBox="0 0 700 420" preserveAspectRatio="xMidYMid meet"></svg>
+            <!-- floor surface -->
+            <div class="floor-surface"></div>
+        </div>
+    </div>
+
+    <div class="info-panel">
+        <div class="room-title-block">
+            <div class="room-emoji" id="roomEmoji">🏠</div>
+            <div class="room-label" id="roomLabel">Room</div>
+            <div class="floor-label" id="floorLabel">Floor 01</div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="metrics">
+            <div class="metric">
+                <div class="label">Temperature</div>
+                <div class="value" id="metricTemp">—</div>
+            </div>
+            <div class="metric">
+                <div class="label">Humidity</div>
+                <div class="value" id="metricHumidity">—</div>
+            </div>
+            <div class="metric">
+                <div class="label">Air Quality</div>
+                <div class="value" id="metricAir">—</div>
+            </div>
+            <div class="metric">
+                <div class="label">Energy Draw</div>
+                <div class="value" id="metricEnergy">—</div>
+            </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="light-status-badge" id="lightBadge">
+            <span class="status-dot"></span>
+            <span id="lightBadgeText">Light Off</span>
+        </div>
+    </div>
+</div>
+
+<script>
+    const params = new URLSearchParams(window.location.search);
+    const roomName = params.get('room') || 'Room';
+    const roomIcon = params.get('icon') || '🏠';
+    const floorName = params.get('floor') || 'Floor 01';
+    const lightOn = params.get('light') === 'on';
+    const temp = params.get('temp') || '—';
+    const humidity = params.get('humidity') || '—';
+    const airQuality = params.get('airQuality') || '—';
+    const energy = params.get('energy') || '—';
+
+    // Apply light state
+    const body = document.body;
+    const scene = document.getElementById('roomScene');
+    if (lightOn) {
+        body.classList.replace('light-off', 'light-on');
+        scene.classList.add('light-on');
+    } else {
+        scene.classList.add('light-off');
+    }
+
+    document.getElementById('roomEmoji').textContent = roomIcon;
+    document.getElementById('roomLabel').textContent = roomName;
+    document.getElementById('floorLabel').textContent = floorName;
+    document.getElementById('metricTemp').textContent = temp + (temp !== '—' ? '°C' : '');
+    document.getElementById('metricHumidity').textContent = humidity + (humidity !== '—' ? '%' : '');
+    document.getElementById('metricAir').textContent = airQuality;
+    document.getElementById('metricEnergy').textContent = energy;
+    document.getElementById('lightBadgeText').textContent = lightOn ? 'Light On' : 'Light Off';
+    document.title = roomName + ' — Room View';
+
+    // Draw furniture based on room type
+    const svg = document.getElementById('furnitureSvg');
+    const fc = 'rgba(255,255,255,0.2)';
+    const bc = 'rgba(255,255,255,0.06)';
+
+    const furniture = {
+        'Living Room': `
+            <!-- sofa -->
+            <rect x="180" y="280" width="340" height="90" rx="14" fill="${bc}" class="furniture-stroke"/>
+            <rect x="180" y="270" width="340" height="24" rx="8" fill="${bc}" class="furniture-stroke"/>
+            <rect x="180" y="280" width="24" height="90" rx="8" fill="${bc}" class="furniture-stroke"/>
+            <rect x="496" y="280" width="24" height="90" rx="8" fill="${bc}" class="furniture-stroke"/>
+            <!-- coffee table -->
+            <rect x="270" y="240" width="160" height="28" rx="6" fill="${bc}" class="furniture-stroke"/>
+            <!-- TV -->
+            <rect x="250" y="150" width="200" height="5" rx="2" fill="rgba(255,255,255,0.08)"/>
+            <rect x="280" y="155" width="140" height="80" rx="4" fill="rgba(30,30,60,0.7)" class="furniture-stroke"/>
+        `,
+        'Kitchen': `
+            <!-- counter top -->
+            <rect x="80" y="200" width="220" height="50" rx="6" fill="${bc}" class="furniture-stroke"/>
+            <rect x="80" y="195" width="220" height="12" rx="4" fill="rgba(255,255,255,0.1)"/>
+            <!-- stove circles -->
+            <circle cx="130" cy="220" r="18" fill="none" class="furniture-stroke"/>
+            <circle cx="190" cy="220" r="18" fill="none" class="furniture-stroke"/>
+            <!-- fridge -->
+            <rect x="380" y="160" width="70" height="160" rx="8" fill="${bc}" class="furniture-stroke"/>
+            <line x1="415" y1="175" x2="415" y2="315" class="furniture-stroke"/>
+            <!-- table -->
+            <rect x="280" y="280" width="120" height="70" rx="8" fill="${bc}" class="furniture-stroke"/>
+            <circle cx="300" cy="290" r="12" fill="${bc}" class="furniture-stroke"/>
+            <circle cx="380" cy="290" r="12" fill="${bc}" class="furniture-stroke"/>
+        `,
+        'Bedroom': `
+            <!-- bed frame -->
+            <rect x="160" y="210" width="380" height="170" rx="14" fill="${bc}" class="furniture-stroke"/>
+            <!-- headboard -->
+            <rect x="160" y="180" width="380" height="40" rx="10" fill="${bc}" class="furniture-stroke"/>
+            <!-- pillows -->
+            <rect x="185" y="215" width="140" height="60" rx="10" fill="rgba(255,255,255,0.08)" class="furniture-stroke"/>
+            <rect x="375" y="215" width="140" height="60" rx="10" fill="rgba(255,255,255,0.08)" class="furniture-stroke"/>
+            <!-- nightstands -->
+            <rect x="80" y="210" width="65" height="65" rx="8" fill="${bc}" class="furniture-stroke"/>
+            <rect x="555" y="210" width="65" height="65" rx="8" fill="${bc}" class="furniture-stroke"/>
+        `,
+        'Bathroom': `
+            <!-- bathtub -->
+            <rect x="80" y="200" width="200" height="100" rx="20" fill="${bc}" class="furniture-stroke"/>
+            <rect x="90" y="210" width="180" height="80" rx="15" fill="rgba(100,180,255,0.06)"/>
+            <!-- sink -->
+            <rect x="380" y="200" width="80" height="60" rx="10" fill="${bc}" class="furniture-stroke"/>
+            <circle cx="420" cy="225" r="20" fill="rgba(100,180,255,0.05)" class="furniture-stroke"/>
+            <!-- toilet -->
+            <rect x="500" y="210" width="70" height="80" rx="10" fill="${bc}" class="furniture-stroke"/>
+            <ellipse cx="535" cy="250" rx="28" ry="22" fill="${bc}" class="furniture-stroke"/>
+        `,
+        'Home Office': `
+            <!-- desk -->
+            <rect x="140" y="220" width="300" height="55" rx="8" fill="${bc}" class="furniture-stroke"/>
+            <rect x="145" y="272" width="10" height="80" fill="${bc}"/>
+            <rect x="425" y="272" width="10" height="80" fill="${bc}"/>
+            <!-- monitor -->
+            <rect x="240" y="160" width="150" height="60" rx="5" fill="rgba(30,30,60,0.8)" class="furniture-stroke"/>
+            <rect x="305" y="218" width="8" height="20" fill="${bc}"/>
+            <rect x="285" y="236" width="48" height="5" rx="2" fill="${bc}"/>
+            <!-- chair -->
+            <circle cx="290" cy="330" r="40" fill="${bc}" class="furniture-stroke"/>
+        `,
+        'Guest Room': `
+            <!-- bed (smaller) -->
+            <rect x="200" y="220" width="300" height="150" rx="12" fill="${bc}" class="furniture-stroke"/>
+            <rect x="200" y="192" width="300" height="35" rx="8" fill="${bc}" class="furniture-stroke"/>
+            <rect x="225" y="226" width="110" height="55" rx="8" fill="rgba(255,255,255,0.07)" class="furniture-stroke"/>
+            <rect x="365" y="226" width="110" height="55" rx="8" fill="rgba(255,255,255,0.07)" class="furniture-stroke"/>
+            <!-- wardrobe -->
+            <rect x="80" y="160" width="80" height="160" rx="6" fill="${bc}" class="furniture-stroke"/>
+            <line x1="120" y1="165" x2="120" y2="315" class="furniture-stroke"/>
+        `,
+        'Hallway': `
+            <!-- runner rug -->
+            <rect x="280" y="140" width="60" height="250" rx="10" fill="rgba(102,126,234,0.12)" class="furniture-stroke"/>
+            <!-- console table -->
+            <rect x="100" y="230" width="120" height="40" rx="6" fill="${bc}" class="furniture-stroke"/>
+            <rect x="110" y="270" width="8" height="60" fill="${bc}"/>
+            <rect x="202" y="270" width="8" height="60" fill="${bc}"/>
+            <!-- coat hooks (circles) -->
+            <circle cx="80" cy="200" r="8" fill="${bc}" class="furniture-stroke"/>
+            <circle cx="80" cy="230" r="8" fill="${bc}" class="furniture-stroke"/>
+            <circle cx="80" cy="260" r="8" fill="${bc}" class="furniture-stroke"/>
+        `,
+        'Balcony': `
+            <!-- railing lines -->
+            <line x1="80" y1="250" x2="620" y2="250" class="furniture-stroke"/>
+            <line x1="80" y1="280" x2="620" y2="280" class="furniture-stroke"/>
+            ${[...Array(15)].map((_,i) => `<line x1="${80 + i*37}" y1="250" x2="${80 + i*37}" y2="310" class="furniture-stroke"/>`).join('')}
+            <!-- chair 1 -->
+            <rect x="160" y="290" width="60" height="60" rx="8" fill="${bc}" class="furniture-stroke"/>
+            <rect x="160" y="265" width="60" height="30" rx="6" fill="${bc}" class="furniture-stroke"/>
+            <!-- chair 2 -->
+            <rect x="480" y="290" width="60" height="60" rx="8" fill="${bc}" class="furniture-stroke"/>
+            <rect x="480" y="265" width="60" height="30" rx="6" fill="${bc}" class="furniture-stroke"/>
+            <!-- small table -->
+            <circle cx="350" cy="320" r="38" fill="${bc}" class="furniture-stroke"/>
+        `,
+    };
+
+    const defaultFurniture = `
+        <rect x="150" y="240" width="400" height="100" rx="12" fill="${bc}" class="furniture-stroke"/>
+        <rect x="280" y="195" width="140" height="50" rx="8" fill="${bc}" class="furniture-stroke"/>
+    `;
+
+    svg.innerHTML = furniture[roomName] || defaultFurniture;
+</script>
+</body>
+</html>
